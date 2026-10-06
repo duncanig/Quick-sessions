@@ -1,0 +1,707 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Igloo Panorama Sessions: quiz and spelling game templates designed for an 8000 x 1080 display.">
+<style>
+:root{color-scheme:light}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>Igloo Panorama Sessions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500&family=Figtree:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap">
+<style>
+/* Layout: teacher chrome and edit forms are normal responsive page UI.
+   The play area is a fixed 8000x1080 stage, scaled to fit whatever screen it is on.
+   The stage is a night-sky scene, so it keeps its own colours in both page themes. */
+:root{
+  --bg:#EAF1F6; --surface:#F8FBFD; --surface2:#DDE9F1; --fg:#0F2233; --muted:#4F6577; --line:#BCCEDB;
+  --accent:#D9480F; --accent-fg:#FFFFFF; --ice:#1B7DA6;
+  --good:#177A4C; --good-bg:#DCF3E7; --bad:#B42323; --bad-bg:#FBE2E2;
+  /* stage palette, same in light and dark */
+  --st-fg:#EAF4FB; --st-mut:#93B1C8; --st-card:rgba(255,255,255,.07); --st-line:rgba(255,255,255,.2);
+  --st-accent:#FF8A4C; --st-accent-fg:#1B0D04; --st-ice:#6CCBEA; --st-good:#4ADE9A; --st-bad:#FF8585;
+  --font-display:'Unbounded','Trebuchet MS',sans-serif;
+  --font-body:'Figtree','Segoe UI',system-ui,sans-serif;
+  --font-mono:'DM Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0B1624; --surface:#122236; --surface2:#1B3049; --fg:#E6F1F8; --muted:#92ABBE; --line:#294560;
+    --accent:#FF8A4C; --accent-fg:#1B0D04; --ice:#6CCBEA;
+    --good:#4ADE9A; --good-bg:#12382A; --bad:#FF8585; --bad-bg:#3C1B1F;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B1624; --surface:#122236; --surface2:#1B3049; --fg:#E6F1F8; --muted:#92ABBE; --line:#294560;
+  --accent:#FF8A4C; --accent-fg:#1B0D04; --ice:#6CCBEA;
+  --good:#4ADE9A; --good-bg:#12382A; --bad:#FF8585; --bad-bg:#3C1B1F;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.5;padding-inline:16px;padding-block:28px 48px}
+.wrap{max-width:1180px;margin-inline:auto;display:flex;flex-direction:column;gap:18px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--ice);outline-offset:2px}
+h1,h2,h3,p,ul,ol{margin:0}
+ul,ol{padding:0;list-style:none}
+.mono{font-family:var(--font-mono);font-weight:500}
+.eyebrow{font-family:var(--font-mono);font-weight:500;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.hint{color:var(--muted);font-size:.88rem}
+.small{font-size:.85rem}
+
+/* page chrome */
+.top{display:flex;flex-direction:column;gap:8px}
+.top h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,5vw,2.6rem);line-height:1.08;text-wrap:balance}
+.lede{max-width:66ch;color:var(--muted)}
+.tabs{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tab{text-align:left;padding:12px 16px;border:1px solid var(--line);border-radius:14px;background:var(--surface);display:flex;flex-direction:column;gap:2px;min-width:0}
+.tab strong{font-family:var(--font-display);font-weight:500;font-size:.95rem}
+.tab span{color:var(--muted);font-size:.85rem}
+.tab[aria-selected="true"]{background:var(--surface2);outline:2px solid var(--accent);outline-offset:-2px;border-color:transparent}
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.bar .right{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);background:var(--surface2);border-radius:11px;padding:3px}
+.seg button{border:0;background:transparent;padding:7px 18px;border-radius:8px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.btn{padding:10px 18px;border-radius:10px;border:2px solid var(--accent);background:var(--accent);color:var(--accent-fg);font-weight:700}
+.btn.secondary{background:transparent;border-color:var(--line);color:var(--fg)}
+.btn.secondary:hover:not(:disabled){border-color:var(--ice)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted);text-decoration:underline;padding:6px 8px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.foot{color:var(--muted);font-size:.88rem;max-width:80ch}
+.keys-hint{color:var(--muted);font-size:.88rem}
+.msg{font-weight:600;min-height:1.4em}
+
+/* stage host */
+.scroller{overflow-x:auto;border-radius:12px;background:#000}
+.viewport{position:relative;width:100%;aspect-ratio:8000/1080;overflow:hidden;background:#000}
+.scroller.real .viewport{width:8000px;max-width:none}
+.viewport:fullscreen{aspect-ratio:auto;width:100vw;height:100vh}
+.stage{position:absolute;left:0;top:0;width:8000px;height:1080px;transform-origin:0 0;overflow:hidden;color:var(--st-fg);font-family:var(--font-body);user-select:none;-webkit-user-select:none}
+.stage button{font-family:inherit;color:inherit}
+.stage.q{background:
+  radial-gradient(2600px 760px at 18% 118%,rgba(108,203,234,.28),transparent 70%),
+  radial-gradient(2400px 700px at 78% -18%,rgba(255,138,76,.16),transparent 70%),
+  linear-gradient(180deg,#060E20,#0D2748)}
+.stage.r{background:#050B18}
+
+/* quiz stage: n copies of the same panel across the width */
+.st{position:absolute;top:0;height:1080px;display:flex;justify-content:center;align-items:center}
+.st+.st{border-left:2px solid var(--st-line)}
+.st-in{display:flex;flex-direction:column;gap:24px}
+.s-eyebrow{font-family:var(--font-mono);font-size:34px;letter-spacing:.2em;text-transform:uppercase;color:var(--st-mut)}
+.s-title{font-family:var(--font-display);font-weight:700;font-size:84px;line-height:1.08;text-wrap:balance}
+.n1 .s-title{font-size:130px}.n2 .s-title{font-size:104px}
+.s-sub{font-size:44px;color:var(--st-mut)}
+.s-rules{display:flex;flex-direction:column;gap:6px;font-size:38px;color:var(--st-mut)}
+.s-rules li::before{content:"–";margin-right:16px}
+.s-big{font-family:var(--font-display);font-weight:700;font-size:72px;line-height:1.12;text-wrap:balance}
+.s-meta{display:flex;justify-content:space-between;align-items:baseline;gap:20px;font-family:var(--font-mono);font-size:34px;letter-spacing:.08em;color:var(--st-mut)}
+.s-turn{font-family:var(--font-body);font-weight:700;font-size:42px;letter-spacing:0;color:var(--st-accent)}
+.s-board{display:flex;flex-wrap:wrap;gap:14px}
+.s-board li{display:flex;align-items:center;gap:18px;padding:10px 22px;border-radius:16px;border:3px solid var(--st-line);font-size:36px;font-weight:600}
+.s-board li.turn{border-color:var(--st-accent)}
+.s-board .ts{font-family:var(--font-mono);font-variant-numeric:tabular-nums}
+.s-board .sk{font-family:var(--font-mono);font-size:28px;background:var(--st-accent);color:var(--st-accent-fg);border-radius:99px;padding:0 14px}
+.s-timer{height:18px;border-radius:9px;background:rgba(255,255,255,.14);overflow:hidden}
+.s-timer.off{opacity:.3}
+.s-timer .qbar{height:100%;border-radius:9px;background:var(--st-ice)}
+.s-timer .qbar.warn{background:var(--st-accent)}
+.s-q{font-size:64px;line-height:1.15;font-weight:700;text-wrap:balance;min-height:148px}
+.n2 .s-q{font-size:80px;min-height:184px}.n1 .s-q{font-size:104px;min-height:240px}
+.s-ans{display:grid;grid-template-columns:1fr 1fr;gap:22px}
+.n1 .s-ans{grid-template-columns:repeat(4,minmax(0,1fr))}
+.s-a{display:flex;align-items:center;gap:22px;min-height:130px;padding:20px 28px;border:4px solid var(--st-line);border-radius:22px;background:var(--st-card);font-size:46px;font-weight:600;text-align:left;min-width:0}
+.n2 .s-a{font-size:56px;min-height:160px}.n1 .s-a{font-size:60px;min-height:200px}
+.s-a .k{flex:none;width:64px;height:64px;border-radius:16px;background:rgba(255,255,255,.14);display:grid;place-items:center;font-family:var(--font-mono);font-size:34px}
+.s-a.ok{border-color:var(--st-good);background:rgba(74,222,154,.2)}
+.s-a.no{border-color:var(--st-bad);background:rgba(255,133,133,.2)}
+.s-a.dim{opacity:.4}
+.s-a.gone{visibility:hidden}
+.s-a:hover{border-color:var(--st-ice)}
+.s-a.ok:hover{border-color:var(--st-good)}.s-a.no:hover{border-color:var(--st-bad)}.s-a.gone:hover{border-color:transparent}
+.s-fb{padding:20px 30px;border-radius:22px;font-size:46px;font-weight:700}
+.s-fb small{display:block;font-size:34px;font-weight:500;opacity:.9}
+.s-fb.good{background:rgba(74,222,154,.2);color:var(--st-good)}
+.s-fb.bad{background:rgba(255,133,133,.2);color:var(--st-bad)}
+.sbtn{font-size:44px;font-weight:700;padding:22px 52px;border-radius:20px;border:4px solid var(--st-accent);background:var(--st-accent);color:var(--st-accent-fg)}
+.sbtn.alt{background:transparent;border-color:var(--st-line);color:var(--st-fg)}
+.sbtn.alt:hover:not(:disabled){border-color:var(--st-ice)}
+.sbtn:disabled{opacity:.35;cursor:not-allowed}
+.s-row{display:flex;flex-wrap:wrap;gap:18px;align-items:center}
+.s-rank{display:flex;flex-direction:column;gap:14px;counter-reset:rk}
+.s-rank li{counter-increment:rk;display:flex;align-items:center;gap:24px;padding:16px 26px;border-radius:20px;border:3px solid var(--st-line);font-size:50px;font-weight:700}
+.s-rank li::before{content:counter(rk);font-family:var(--font-mono);width:68px;height:68px;border-radius:50%;background:var(--st-fg);color:#07122A;display:grid;place-items:center;font-size:38px}
+.s-rank .tn{flex:1}
+.s-rank .ts{font-family:var(--font-mono)}
+
+/* rocket stage */
+.bg{position:absolute;left:0;top:0}
+.star{fill:#fff}
+.flame{fill:#FFB33D;display:none;transform-origin:50px 120px}
+.launching .flame{display:block;animation:flick .12s infinite alternate}
+.launching .rocket{animation:lift 4s cubic-bezier(.55,0,.85,.6) forwards}
+@keyframes lift{to{transform:translateY(-330px)}}
+@keyframes flick{from{transform:scaleY(.8)}to{transform:scaleY(1.25)}}
+.rtitle{position:absolute;left:400px;top:36px;font-family:var(--font-mono);font-size:32px;letter-spacing:.24em;text-transform:uppercase;color:var(--st-mut)}
+.fuel{position:absolute;left:400px;right:400px;top:96px;height:64px;display:flex;align-items:center;gap:30px}
+.fuel .fl{font-family:var(--font-mono);font-size:36px;letter-spacing:.2em;color:var(--st-mut)}
+.fuel .fp{font-family:var(--font-mono);font-size:44px;width:130px;text-align:right;font-variant-numeric:tabular-nums}
+.ftube{position:relative;flex:1;height:100%;border:4px solid var(--st-line);border-radius:32px;background:rgba(255,255,255,.08);overflow:hidden}
+.gfill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,#FF6B2C,#FFB347);transition:width .7s ease}
+.ftube i{position:absolute;top:0;bottom:0;width:3px;background:rgba(5,11,24,.7)}
+.rst{position:absolute;top:210px;height:680px;display:flex;justify-content:center;align-items:center}
+.r-in{width:2800px;display:flex;flex-direction:column;gap:30px;align-items:center;text-align:center}
+.r-meta{font-family:var(--font-mono);font-size:34px;letter-spacing:.1em;color:var(--st-mut)}
+.r-clue{width:100%;padding:22px 30px;border-radius:22px;background:rgba(5,11,24,.62);border:3px solid var(--st-line);font-size:48px;font-weight:600;line-height:1.2}
+.r-word{display:flex;flex-wrap:nowrap;gap:14px;justify-content:center}
+.t{display:grid;place-items:center;border-radius:20px;font-family:var(--font-mono);font-weight:500}
+.t.given{background:rgba(255,255,255,.16)}
+.t.mine{background:var(--st-accent);color:var(--st-accent-fg)}
+.t.blank{border:5px dashed var(--st-mut);background:rgba(5,11,24,.55)}
+.t.blank.active{border:5px solid var(--st-accent);animation:pulse 1.2s ease-in-out infinite}
+.t.gap{background:transparent}
+.t.shake{animation:shake .35s}
+@keyframes pulse{50%{box-shadow:0 0 0 14px rgba(255,138,76,.28)}}
+@keyframes shake{25%{transform:translateX(-14px)}75%{transform:translateX(14px)}}
+.r-ok{font-size:44px;font-weight:700;color:var(--st-good)}
+.r-sub{font-size:40px;color:var(--st-mut)}
+.r-lift{font-family:var(--font-display);font-weight:700;font-size:110px;line-height:1.05}
+.kbd{position:absolute;left:200px;right:200px;top:934px;display:grid;grid-template-columns:repeat(26,minmax(0,1fr));gap:12px}
+.kb{height:96px;border-radius:18px;border:3px solid var(--st-line);background:rgba(5,11,24,.72);font-family:var(--font-mono);font-weight:500;font-size:54px}
+.kb:hover:not(:disabled){border-color:var(--st-ice)}
+.kb.wrong{background:rgba(255,133,133,.25);border-color:var(--st-bad);color:var(--st-bad)}
+.kb:disabled{opacity:.4;cursor:default}
+.emptyst{position:absolute;inset:0;display:flex;flex-direction:column;gap:30px;align-items:center;justify-content:center;font-size:56px;text-align:center}
+
+/* edit forms */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:clamp(16px,3vw,28px);display:flex;flex-direction:column;gap:20px;min-width:0}
+.panel h2{font-family:var(--font-display);font-weight:700;font-size:clamp(1.1rem,3.4vw,1.5rem);line-height:1.2;text-wrap:balance}
+.edit{display:flex;flex-direction:column;gap:20px}
+.edit h3{font-family:var(--font-display);font-weight:500;font-size:1rem}
+.grid2{display:grid;grid-template-columns:2fr 1fr;gap:16px}
+.field{display:flex;flex-direction:column;gap:6px;border:0;padding:0;margin:0;min-width:0}
+.field>span,.field legend{font-weight:600;font-size:.9rem;padding:0}
+.field input[type=text],.field input[type=number],.field select,.field textarea,.atxt{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);min-width:0}
+.field textarea{resize:vertical;line-height:1.5}
+.teamrow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.check{display:flex;gap:10px;align-items:center;font-weight:500}
+.qcard{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--bg);display:flex;flex-direction:column;gap:12px}
+.qcard-h{display:flex;justify-content:space-between;align-items:center}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{display:flex;align-items:center;gap:10px;min-width:0}
+.opt input[type=radio]{width:20px;height:20px;accent-color:var(--accent);flex:none}
+.paste{border:1px dashed var(--line);border-radius:14px;padding:14px 16px}
+.paste summary{font-weight:700;cursor:pointer}
+.paste .inner{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+pre.prompt{margin:0;white-space:pre-wrap;word-break:break-word;font-family:var(--font-mono);font-size:.82rem;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px}
+@media (max-width:560px){
+  .opts,.grid2{grid-template-columns:minmax(0,1fr)}
+  .teamrow{grid-template-columns:1fr 1fr}
+  .tabs{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important;transition:none!important}
+  .launching .rocket{transform:translateY(-330px)}
+}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">Igloo concept prototype · 8000 × 1080</p>
+    <h1>Panorama Sessions</h1>
+    <p class="lede">Ready-made sessions drawn for a very wide display. The teacher changes the text in Edit, then presses Play. On a laptop the stage is scaled to fit, and on the real display it runs at full size.</p>
+  </header>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div class="bar" id="bar"></div>
+  <main id="host"></main>
+  <p class="foot">Concept prototype for customer research. Edits last until the page is closed. Key content sits in the middle band of the stage, away from the top and bottom edges, so it should survive some edge distortion. This has not been tested on a real display yet.</p>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(s){return document.querySelector(s)};
+var esc=function(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var shuffle=function(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a};
+
+var tab='quiz';
+var mode={quiz:'play',rocket:'play'};
+var real=false;
+
+/* ---------- content the teacher edits ---------- */
+var quizData={
+  title:'Polar Planet Quiz',
+  teams:['Team Aurora','Team Boreal','',''],
+  seconds:20,
+  shuffle:true,
+  layout:'around',
+  questions:[
+    {q:'Which continent is the South Pole on?',a:['Antarctica','Africa','Asia','Europe'],c:0},
+    {q:'What do we call the glowing lights in the sky near the poles?',a:['Eclipse','Aurora','Meteor shower','Rainbow'],c:1},
+    {q:'Which of these animals lives in the Arctic?',a:['Penguin','Leopard seal','Polar bear','Krill'],c:2},
+    {q:'What is a huge chunk of ice floating in the sea called?',a:['Tundra','Blizzard','Geyser','Iceberg'],c:3},
+    {q:'At what temperature in Celsius does pure water freeze?',a:['0','10','-10','32'],c:0},
+    {q:'Roughly how much of an iceberg is hidden under the water?',a:['About a quarter','About nine tenths','About half','About a tenth'],c:1}
+  ]
+};
+var rocketData={
+  title:'Moon Base Refuel',
+  difficulty:'medium',
+  words:'planet | We live on one of these\ngravity | The force that keeps us on the ground\norbit | The curved path a moon takes around a planet\ncrater | A bowl-shaped dent made by a space rock\nastronaut | A person trained to travel in space\ngalaxy | A huge group of stars, like the Milky Way\ntelescope | A tool for looking at faraway stars\ncomet | An icy space traveller with a glowing tail\neclipse | When one space body hides another\nsatellite | A machine that circles the Earth'
+};
+var QUIZ_PROMPT='Write 8 multiple-choice quiz questions about [topic] for [year group]. Give 4 answers for each question. Use exactly this format, with * before the correct answer and - before each wrong answer:\n\nQ: Question text\n- Wrong answer\n- Wrong answer\n* Correct answer\n- Wrong answer';
+var WORD_PROMPT='Give me 10 spelling words about [topic] for [year group]. Put one word per line, then a | symbol, then a short clue. Example:\n\nplanet | We live on one of these';
+
+/* ---------- quiz engine ---------- */
+var qg=null,timerId=null;
+function stopTimer(){clearInterval(timerId);timerId=null}
+function validQuestions(){
+  return quizData.questions.map(function(x){
+    return {q:x.q.trim(),answers:x.a.map(function(t,i){return {t:t.trim(),ok:i===x.c}}).filter(function(a){return a.t})};
+  }).filter(function(x){return x.q&&x.answers.length>=2&&x.answers.some(function(a){return a.ok})});
+}
+function teamNames(){var t=quizData.teams.map(function(s){return s.trim()}).filter(Boolean);return t.length?t:['Class']}
+function newQuizGame(){
+  var qs=validQuestions();
+  if(quizData.shuffle)qs=shuffle(qs);
+  qs=qs.map(function(x){return {q:x.q,answers:shuffle(x.answers)}});
+  var names=teamNames();
+  var secs=Math.min(120,Math.max(5,+quizData.seconds||20));
+  qg={phase:'intro',qs:qs,names:names,qi:0,turn:0,
+    scores:names.map(function(){return 0}),streaks:names.map(function(){return 0}),lifelines:names.map(function(){return true}),
+    hidden:[],picked:null,gain:0,ok:false,br:null,left:secs,total:secs};
+}
+function startQ(){
+  var g=qg;g.phase='question';g.left=g.total;g.hidden=[];g.picked=null;
+  renderMain();stopTimer();
+  var t0=performance.now();
+  timerId=setInterval(function(){
+    g.left=Math.max(0,g.total-(performance.now()-t0)/1000);
+    document.querySelectorAll('.qbar').forEach(function(b){b.style.width=(g.left/g.total*100)+'%';b.classList.toggle('warn',g.left<=5)});
+    document.querySelectorAll('.qsec').forEach(function(s){s.textContent=Math.ceil(g.left)+'s'});
+    if(g.left<=0)answer(null);
+  },100);
+}
+function answer(idx){
+  var g=qg;if(!g||g.phase!=='question')return;
+  stopTimer();
+  var q=g.qs[g.qi];
+  var ok=idx!==null&&q.answers[idx].ok;
+  g.br=null;
+  if(ok){
+    var speed=Math.round(g.left/g.total*50);
+    var streak=Math.min(g.streaks[g.turn],4)*25;
+    g.br={base:100,speed:speed,streak:streak};
+    g.gain=100+speed+streak;
+    g.scores[g.turn]+=g.gain;
+    g.streaks[g.turn]++;
+  }else{
+    g.gain=0;g.streaks[g.turn]=0;
+  }
+  g.phase='feedback';g.picked=idx;g.ok=ok;
+  renderMain();
+}
+function qn(){return {around:4,pair:2,single:1}[quizData.layout]||4}
+function boardHTML(g){
+  return '<ul class="s-board">'+g.names.map(function(n,i){
+    var turn=g.phase!=='end'&&g.phase!=='intro'&&i===g.turn&&g.names.length>1;
+    return '<li class="'+(turn?'turn':'')+'"><span>'+esc(n)+'</span><span class="ts">'+g.scores[i]+'</span>'+(g.streaks[i]>=2?'<span class="sk">x'+g.streaks[i]+'</span>':'')+'</li>';
+  }).join('')+'</ul>';
+}
+function quizStation(g){
+  if(!g.qs.length){
+    return '<p class="s-big">This quiz has no complete questions yet.</p><p class="s-sub">Choose Edit and add a question with at least two answers and one marked correct.</p>';
+  }
+  if(g.phase==='intro'){
+    return '<p class="s-eyebrow">Quiz show</p><h2 class="s-title">'+esc(quizData.title||'Quiz')+'</h2>'
+      +'<p class="s-sub">'+g.qs.length+' questions, '+g.total+' seconds each</p>'
+      +'<ul class="s-rules"><li>'+(g.names.length>1?'Teams take turns to answer.':'One team answers every question.')+'</li><li>Quick answers earn up to 50 bonus points.</li><li>Each correct answer in a row adds 25 points, up to 100.</li><li>Every team gets one 50/50 lifeline.</li></ul>'
+      +boardHTML(g)+'<div class="s-row"><button class="sbtn" data-act="qstart">Start the quiz</button></div>';
+  }
+  if(g.phase==='end'){
+    var order=g.names.map(function(n,i){return {n:n,s:g.scores[i]}}).sort(function(a,b){return b.s-a.s});
+    var top=order.filter(function(o){return o.s===order[0].s});
+    var head=g.names.length===1?'Final score: '+order[0].s:(top.length>1?'A tie between '+top.map(function(t){return esc(t.n)}).join(' and '):esc(order[0].n)+' wins');
+    return '<p class="s-eyebrow">Final scores</p><p class="s-big">'+head+'</p>'
+      +'<ol class="s-rank">'+order.map(function(o){return '<li><span class="tn">'+esc(o.n)+'</span><span class="ts">'+o.s+'</span></li>'}).join('')+'</ol>'
+      +'<div class="s-row"><button class="sbtn" data-act="qagain">Play again</button></div>';
+  }
+  var q=g.qs[g.qi],fb=g.phase==='feedback';
+  var correctText=q.answers.filter(function(a){return a.ok})[0].t;
+  var html='<div class="s-meta"><span>QUESTION '+(g.qi+1)+' OF '+g.qs.length+'</span>'
+    +(g.names.length>1?'<span class="s-turn">'+esc(g.names[g.turn])+', your question</span>':'')
+    +'<span class="qsec">'+(fb?'':Math.ceil(g.left)+'s')+'</span></div>'
+    +boardHTML(g)
+    +'<div class="s-timer '+(fb?'off':'')+'"><div class="qbar '+(g.left<=5&&!fb?'warn':'')+'" style="width:'+(g.left/g.total*100)+'%"></div></div>'
+    +'<h3 class="s-q">'+esc(q.q)+'</h3>'
+    +'<div class="s-ans">'+q.answers.map(function(a,i){
+      var cls='';
+      if(fb){cls=a.ok?'ok':(i===g.picked?'no':'dim')}
+      else if(g.hidden.indexOf(i)>-1){cls='gone'}
+      return '<button class="s-a '+cls+'" data-act="qans" data-i="'+i+'" '+(fb||cls==='gone'?'disabled':'')+'><span class="k">'+'ABCD'[i]+'</span><span>'+esc(a.t)+'</span></button>';
+    }).join('')+'</div>';
+  if(fb){
+    var msg;
+    if(g.ok)msg='<div class="s-fb good">+'+g.gain+' points<small>'+g.br.base+' for the answer, '+g.br.speed+' for speed'+(g.br.streak?', '+g.br.streak+' for the streak':'')+'</small></div>';
+    else if(g.picked===null)msg='<div class="s-fb bad">Time is up<small>The answer was '+esc(correctText)+'.</small></div>';
+    else msg='<div class="s-fb bad">Not this time<small>The answer was '+esc(correctText)+'.</small></div>';
+    html+=msg+'<div class="s-row"><button class="sbtn" data-act="qnext">'+(g.qi+1>=g.qs.length?'See results':'Next question')+'</button></div>';
+  }else{
+    var can=g.lifelines[g.turn]&&q.answers.length>2;
+    html+='<div class="s-row"><button class="sbtn alt" data-act="q5050" '+(can?'':'disabled')+'>50/50 for '+esc(g.names[g.turn])+'</button></div>';
+  }
+  return html;
+}
+function quizStageHTML(g){
+  var n=qn(),W=8000/n,cw=n===1?3800:W-240,out='',inner=quizStation(g);
+  for(var i=0;i<n;i++){
+    out+='<section class="st" style="left:'+(i*W)+'px;width:'+W+'px"><div class="st-in" style="width:'+cw+'px">'+inner+'</div></section>';
+  }
+  return out;
+}
+function parseQuiz(text){
+  var out=[],cur=null;
+  text.split('\n').forEach(function(raw){
+    var l=raw.trim();if(!l)return;
+    var m=l.match(/^Q\d*\s*[:.)]\s*(.+)$/i);
+    if(m){cur={q:m[1].trim(),a:[],c:-1};out.push(cur);return}
+    m=l.match(/^([*-])\s*(.+)$/);
+    if(cur&&m&&cur.a.length<4){cur.a.push(m[2].trim());if(m[1]==='*'&&cur.c<0)cur.c=cur.a.length-1}
+  });
+  return out.filter(function(x){return x.a.length>=2&&x.c>=0}).map(function(x){while(x.a.length<4)x.a.push('');return x});
+}
+function quizEdit(){
+  var d=quizData;
+  var html='<section class="panel"><h2>Edit: '+esc(d.title||'Untitled quiz')+'</h2><div class="edit">'
+    +'<div class="grid2"><label class="field"><span>Quiz title</span><input type="text" id="e-qtitle" data-f="qtitle" value="'+esc(d.title)+'"></label>'
+    +'<label class="field"><span>Seconds per question</span><input type="number" id="e-qsec" min="5" max="120" data-f="qsec" value="'+esc(d.seconds)+'"></label></div>'
+    +'<label class="field"><span>How the question is shown on the wide display</span><select id="e-qlayout" data-f="qlayout">'
+    +[['around','Repeated 4 times, so everyone in the room can read it'],['pair','Repeated 2 times, left and right'],['single','One large panel in the middle']].map(function(o){return '<option value="'+o[0]+'" '+(d.layout===o[0]?'selected':'')+'>'+o[1]+'</option>'}).join('')
+    +'</select></label>'
+    +'<fieldset class="field"><legend>Teams (leave a box blank to skip it)</legend><div class="teamrow">'
+    +[0,1,2,3].map(function(i){return '<input type="text" id="e-qteam'+i+'" data-f="qteam" data-i="'+i+'" aria-label="Team '+(i+1)+' name" placeholder="Team '+(i+1)+'" value="'+esc(d.teams[i]||'')+'">'}).join('')
+    +'</div></fieldset>'
+    +'<label class="check"><input type="checkbox" id="e-qshuf" data-f="qshuf" '+(d.shuffle?'checked':'')+'> Shuffle the question order each time</label>'
+    +'<h3>Questions</h3>';
+  d.questions.forEach(function(q,i){
+    html+='<div class="qcard"><div class="qcard-h"><span class="mono">Question '+(i+1)+'</span><button class="btn ghost" data-act="qdelq" data-i="'+i+'">Remove</button></div>'
+      +'<label class="field"><span>Question</span><input type="text" id="e-q'+i+'" data-f="qq" data-i="'+i+'" value="'+esc(q.q)+'"></label>'
+      +'<div class="opts">'+[0,1,2,3].map(function(j){
+        return '<div class="opt"><input type="radio" name="c'+i+'" id="e-c'+i+'-'+j+'" data-f="qc" data-i="'+i+'" data-j="'+j+'" aria-label="Mark answer '+'ABCD'[j]+' as correct" '+(q.c===j?'checked':'')+'>'
+          +'<input type="text" class="atxt" id="e-a'+i+'-'+j+'" data-f="qa" data-i="'+i+'" data-j="'+j+'" placeholder="Answer '+'ABCD'[j]+'" value="'+esc(q.a[j]||'')+'"></div>';
+      }).join('')+'</div>'
+      +'<p class="hint">Select the circle beside the correct answer. Blank answers are skipped.</p></div>';
+  });
+  html+='<div class="actions"><button class="btn secondary" data-act="qaddq">Add a question</button></div>'
+    +'<details class="paste"><summary>Paste a whole quiz from text or AI</summary><div class="inner">'
+    +'<p class="hint">Ask any AI tool with this prompt, then paste its answer below. Pasting replaces the questions above.</p>'
+    +'<pre class="prompt" id="qprompt">'+esc(QUIZ_PROMPT)+'</pre>'
+    +'<div class="actions"><button class="btn secondary" data-act="copy" data-src="qprompt">Copy prompt</button></div>'
+    +'<label class="field"><span>Pasted quiz</span><textarea id="qpaste" rows="8" placeholder="Q: What is the capital of France?&#10;- London&#10;* Paris&#10;- Rome&#10;- Madrid"></textarea></label>'
+    +'<div class="actions"><button class="btn" data-act="qparse">Use these questions</button><span class="msg" id="qpmsg" role="status"></span></div>'
+    +'</div></details></div></section>';
+  return html;
+}
+
+/* ---------- rocket engine ---------- */
+var rg=null,rTimer=null;
+function parseWords(){
+  return rocketData.words.split('\n').map(function(l){
+    var p=l.split('|');return {w:(p.shift()||'').trim().toUpperCase(),clue:p.join('|').trim()};
+  }).filter(function(x){return x.w.replace(/[^A-Z]/g,'').length>=2});
+}
+function newRocketGame(){
+  var frac={easy:.3,medium:.5,hard:.7}[rocketData.difficulty]||.5;
+  var ws=shuffle(parseWords()).slice(0,10).map(function(x){
+    var idxs=[];for(var i=0;i<x.w.length;i++){if(/[A-Z]/.test(x.w[i]))idxs.push(i)}
+    var n=Math.max(1,Math.min(idxs.length-1,Math.round(idxs.length*frac)));
+    var blanks=shuffle(idxs).slice(0,n).sort(function(a,b){return a-b});
+    return {w:x.w,clue:x.clue,blanks:blanks,filled:0};
+  });
+  rg={ws:ws,wi:0,leaks:0,reveals:0,phase:'play',wrong:[],shake:false,shown:0,done:0,
+    totalBlanks:ws.reduce(function(s,x){return s+x.blanks.length},0)};
+}
+function rKey(k){
+  if(!rg||rg.phase!=='play'||!rg.ws.length)return;
+  var w=rg.ws[rg.wi],pos=w.blanks[w.filled];
+  if(w.w[pos]===k){rg.wrong=[];fill(w)}
+  else{rg.leaks++;if(rg.wrong.indexOf(k)<0)rg.wrong.push(k);rg.shake=true;renderMain()}
+}
+function fill(w){
+  w.filled++;rg.done++;
+  if(w.filled>=w.blanks.length){
+    rg.phase='wordDone';renderMain();
+    clearTimeout(rTimer);
+    rTimer=setTimeout(function(){
+      if(rg.wi+1<rg.ws.length){rg.wi++;rg.phase='play';renderMain()}
+      else{rg.phase='launch';renderMain()}
+    },950);
+  }else renderMain();
+}
+function tilesHTML(w,ts){
+  var h=Math.round(ts*1.25),f=Math.round(ts*.72);
+  return Array.prototype.map.call(w.w,function(ch,i){
+    if(!/[A-Z]/.test(ch))return '<span class="t gap" style="width:'+Math.round(ts*.4)+'px;height:'+h+'px;font-size:'+f+'px">'+(ch===' '?'':esc(ch))+'</span>';
+    var st='width:'+ts+'px;height:'+h+'px;font-size:'+f+'px';
+    var b=w.blanks.indexOf(i);
+    if(b<0)return '<span class="t given" style="'+st+'">'+ch+'</span>';
+    if(b<w.filled)return '<span class="t mine" style="'+st+'">'+ch+'</span>';
+    var active=b===w.filled&&rg.phase==='play';
+    return '<span class="t blank'+(active?' active':'')+(active&&rg.shake?' shake':'')+'" style="'+st+'"></span>';
+  }).join('');
+}
+var BG=(function(){
+  var seed=7;function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647}
+  var stars='';
+  for(var i=0;i<190;i++){stars+='<circle class="star" cx="'+Math.round(rnd()*8000)+'" cy="'+Math.round(rnd()*820)+'" r="'+(1.2+rnd()*3.2).toFixed(1)+'" opacity="'+(.35+rnd()*.65).toFixed(2)+'"/>'}
+  return '<svg class="bg" width="8000" height="1080" viewBox="0 0 8000 1080" aria-hidden="true">'
+    +'<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#050B18"/><stop offset="1" stop-color="#17386B"/></linearGradient></defs>'
+    +'<rect width="8000" height="1080" fill="url(#sky)"/>'+stars
+    +'<circle cx="4560" cy="270" r="92" fill="#3F7DB4"/><path d="M4500 240c22-18 50-14 62 4-18 8-22 26-40 22-14-4-26-12-22-26z" fill="#5BA36B"/><path d="M4590 300c16-6 34 0 38 12-14 4-20 16-34 12z" fill="#5BA36B"/>'
+    +'</svg>';
+})();
+function moonSVG(launching,pct){
+  return '<svg class="bg '+(launching?'launching':'')+'" width="8000" height="1080" viewBox="0 0 8000 1080" aria-hidden="true">'
+    +'<path d="M0 906 Q1000 846 2000 890 T4000 884 T6000 892 T8000 872 L8000 1080 L0 1080 Z" fill="#6D7F94"/>'
+    +'<path d="M0 930 Q1000 880 2000 918 T4000 912 T6000 920 T8000 902 L8000 1080 L0 1080 Z" fill="#566879"/>'
+    +'<ellipse cx="900" cy="1008" rx="220" ry="26" fill="#4A5B6C"/><ellipse cx="2900" cy="1020" rx="300" ry="28" fill="#4A5B6C"/><ellipse cx="5200" cy="1012" rx="260" ry="26" fill="#4A5B6C"/><ellipse cx="7200" cy="1022" rx="320" ry="28" fill="#4A5B6C"/>'
+    +'<g transform="translate(3780 350) scale(4.4)"><g class="rocket">'
+    +'<path class="flame" d="M42 122 Q50 168 58 122 Z"/>'
+    +'<path d="M30 90 L10 128 L30 116 Z" fill="#E8590C"/><path d="M70 90 L90 128 L70 116 Z" fill="#E8590C"/>'
+    +'<rect x="40" y="112" width="20" height="10" rx="2" fill="#6B7C8C"/>'
+    +'<path d="M50 6 C70 30 74 70 70 114 L30 114 C26 70 30 30 50 6 Z" fill="#F2F6FA"/>'
+    +'<path d="M50 6 C58 16 63 27 65 38 L35 38 C37 27 42 16 50 6 Z" fill="#E8590C"/>'
+    +'<circle cx="50" cy="66" r="11" fill="#1B3A5C" stroke="#9FD3EA" stroke-width="3"/>'
+    +'</g></g></svg>';
+}
+function rocketStageHTML(g){
+  if(!g.ws.length){
+    return BG+'<div class="emptyst"><p>There are no words yet.</p><p class="r-sub">Choose Edit and add one word per line, then a | and a clue.</p></div>';
+  }
+  var pct=g.totalBlanks?Math.round(g.done/g.totalBlanks*100):0;
+  var launching=g.phase==='launch';
+  var html=BG+moonSVG(launching)
+    +'<div class="rtitle">'+esc(rocketData.title||'Refuel mission')+'</div>'
+    +'<div class="fuel"><span class="fl">FUEL</span><div class="ftube"><div class="gfill" style="width:'+g.shown+'%"></div><i style="left:25%"></i><i style="left:50%"></i><i style="left:75%"></i></div><span class="fp">'+pct+'%</span></div>';
+  var side;
+  if(launching){
+    side='<p class="r-lift">Lift off!</p><p class="r-sub">'+(g.leaks?g.leaks+' fuel leak'+(g.leaks===1?'':'s')+' on the way.':'Not a single leak.')+(g.reveals?' '+g.reveals+' letter'+(g.reveals===1?'':'s')+' revealed.':'')+'</p><button class="sbtn" data-act="ragain">Launch again</button>';
+  }else{
+    var w=g.ws[g.wi],len=w.w.length;
+    var ts=Math.max(60,Math.min(170,Math.floor((2800-(len-1)*14)/len)));
+    side='<div class="r-meta">WORD '+(g.wi+1)+' OF '+g.ws.length+' · LEAKS '+g.leaks+'</div>'
+      +'<div class="r-clue">'+esc(w.clue||'No clue added for this word')+'</div>'
+      +'<div class="r-word">'+tilesHTML(w,ts)+'</div>'
+      +(g.phase==='wordDone'?'<p class="r-ok">Tank section filled</p>':'<button class="sbtn alt" data-act="rreveal">Reveal a letter</button>');
+  }
+  [150,4750].forEach(function(x){
+    html+='<section class="rst" style="left:'+x+'px;width:3100px"><div class="r-in">'+side+'</div></section>';
+  });
+  html+='<div class="kbd">'+'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').map(function(k){
+    return '<button class="kb'+(g.wrong.indexOf(k)>-1?' wrong':'')+'" data-act="rkey" data-k="'+k+'" aria-label="Letter '+k+'" '+(g.phase!=='play'?'disabled':'')+'>'+k+'</button>';
+  }).join('')+'</div>';
+  return html;
+}
+function rocketEdit(){
+  var d=rocketData,n=parseWords().length;
+  return '<section class="panel"><h2>Edit: '+esc(d.title||'Untitled mission')+'</h2><div class="edit">'
+    +'<label class="field"><span>Mission title</span><input type="text" id="e-rtitle" data-f="rtitle" value="'+esc(d.title)+'"></label>'
+    +'<label class="field"><span>Words, one per line, then a | and a clue</span><textarea id="e-rwords" rows="11" data-f="rwords">'+esc(d.words)+'</textarea></label>'
+    +'<p class="hint" id="rcount">'+n+' word'+(n===1?'':'s')+' ready. Up to 10 are picked at random each launch, and different letters go missing every time.</p>'
+    +'<label class="field"><span>How many letters go missing</span><select id="e-rdiff" data-f="rdiff">'
+    +[['easy','A few (easy)'],['medium','About half (medium)'],['hard','Most of them (hard)']].map(function(o){return '<option value="'+o[0]+'" '+(d.difficulty===o[0]?'selected':'')+'>'+o[1]+'</option>'}).join('')
+    +'</select></label>'
+    +'<details class="paste"><summary>Get a word list from AI</summary><div class="inner">'
+    +'<p class="hint">Ask any AI tool with this prompt, then paste the answer into the words box above.</p>'
+    +'<pre class="prompt" id="wprompt">'+esc(WORD_PROMPT)+'</pre>'
+    +'<div class="actions"><button class="btn secondary" data-act="copy" data-src="wprompt">Copy prompt</button></div></div></details></div></section>';
+}
+
+/* ---------- shell ---------- */
+var ro=null;
+function fit(){
+  var vp=$('#vp'),st=$('#stage');if(!vp||!st)return;
+  var w=vp.clientWidth,h=vp.clientHeight;if(!w||!h)return;
+  var s=Math.min(w/8000,h/1080);
+  st.style.transform='translate('+((w-8000*s)/2)+'px,'+((h-1080*s)/2)+'px) scale('+s+')';
+}
+function renderChrome(){
+  $('#tabs').innerHTML=[['quiz','Quiz Show','Teams, timer and streaks, repeated around the room'],['rocket','Rocket Refuel','Spell words to fill a fuel line across the whole display']].map(function(t){
+    return '<button class="tab" role="tab" data-act="tab" data-k="'+t[0]+'" aria-selected="'+(tab===t[0])+'"><strong>'+t[1]+'</strong><span>'+t[2]+'</span></button>';
+  }).join('');
+  var play=mode[tab]==='play';
+  var hint=tab==='quiz'?'Keys: A to D answer, L for 50/50, Space for next.':'Keys: type a letter, or use the keys along the bottom.';
+  $('#bar').innerHTML='<div class="seg" role="group" aria-label="Mode">'
+    +'<button data-act="mode" data-v="play" aria-pressed="'+play+'">Play</button>'
+    +'<button data-act="mode" data-v="edit" aria-pressed="'+!play+'">Edit</button></div>'
+    +(play?'<div class="right"><span class="keys-hint">'+hint+'</span>'
+      +'<button class="btn secondary" data-act="real" aria-pressed="'+real+'">'+(real?'Fit to screen':'Real size (8000 px)')+'</button>'
+      +'<button class="btn" data-act="fs">Fullscreen</button><span class="msg small" id="fsmsg" role="status"></span></div>':'');
+}
+function renderMain(){
+  var host=$('#host');
+  if(mode[tab]!=='play'){
+    host.dataset.kind='edit';
+    host.innerHTML=tab==='quiz'?quizEdit():rocketEdit();
+    return;
+  }
+  if(host.dataset.kind!=='play'){
+    host.dataset.kind='play';
+    host.innerHTML='<div class="scroller'+(real?' real':'')+'" id="scroller"><div class="viewport" id="vp"><div class="stage" id="stage"></div></div></div>';
+    if(ro)ro.disconnect();
+    if(window.ResizeObserver){ro=new ResizeObserver(fit);ro.observe($('#vp'))}
+  }
+  var st=$('#stage');
+  if(tab==='quiz'){
+    st.className='stage q n'+qn();
+    st.innerHTML=quizStageHTML(qg);
+  }else{
+    st.className='stage r';
+    st.innerHTML=rocketStageHTML(rg);
+    var pct=rg.totalBlanks?Math.round(rg.done/rg.totalBlanks*100):0;
+    rg.shake=false;
+    var f=st.querySelector('.gfill');
+    if(f&&rg.shown!==pct){requestAnimationFrame(function(){requestAnimationFrame(function(){f.style.width=pct+'%'})})}
+    rg.shown=pct;
+  }
+  fit();
+}
+function resetGames(){stopTimer();clearTimeout(rTimer);newQuizGame();newRocketGame()}
+function renderAll(){renderChrome();renderMain()}
+
+var actions={
+  tab:function(b){tab=b.dataset.k;resetGames();renderAll()},
+  mode:function(b){
+    mode[tab]=b.dataset.v;
+    if(tab==='quiz'){stopTimer();newQuizGame()}else{clearTimeout(rTimer);newRocketGame()}
+    renderAll();
+  },
+  real:function(){
+    real=!real;
+    var sc=$('#scroller');if(sc)sc.classList.toggle('real',real);
+    renderChrome();fit();
+  },
+  fs:function(){
+    var vp=$('#vp');var msg=$('#fsmsg');
+    function fail(){if(msg)msg.textContent='Fullscreen is blocked here. Press F11 in your browser instead.'}
+    try{
+      var fn=vp.requestFullscreen||vp.webkitRequestFullscreen;
+      if(!fn){fail();return}
+      var p=fn.call(vp);
+      if(p&&p.catch)p.catch(fail);
+    }catch(e){fail()}
+  },
+  qstart:function(){startQ()},
+  qans:function(b){answer(+b.dataset.i)},
+  q5050:function(){
+    var g=qg;if(g.phase!=='question'||!g.lifelines[g.turn])return;
+    var q=g.qs[g.qi];
+    var wrong=[];q.answers.forEach(function(a,i){if(!a.ok&&g.hidden.indexOf(i)<0)wrong.push(i)});
+    shuffle(wrong).slice(0,Math.min(2,wrong.length-1)).forEach(function(i){g.hidden.push(i)});
+    g.lifelines[g.turn]=false;
+    renderMain();
+  },
+  qnext:function(){
+    var g=qg;g.qi++;g.turn=(g.turn+1)%g.names.length;
+    if(g.qi>=g.qs.length){g.phase='end';renderMain()}else startQ();
+  },
+  qagain:function(){stopTimer();newQuizGame();renderMain()},
+  qaddq:function(){quizData.questions.push({q:'',a:['','','',''],c:0});renderMain();var i=quizData.questions.length-1;var el=document.getElementById('e-q'+i);if(el)el.focus()},
+  qdelq:function(b){quizData.questions.splice(+b.dataset.i,1);renderMain()},
+  qparse:function(){
+    var parsed=parseQuiz(document.getElementById('qpaste').value);
+    var msg=document.getElementById('qpmsg');
+    if(!parsed.length){msg.textContent='No questions found. Start each question with Q: and mark the correct answer with *.';return}
+    quizData.questions=parsed;renderMain();
+    var d=document.querySelector('details.paste');if(d)d.open=true;
+    var m2=document.getElementById('qpmsg');if(m2)m2.textContent=parsed.length+' questions added above.';
+  },
+  rkey:function(b){rKey(b.dataset.k)},
+  rreveal:function(){
+    var g=rg;if(g.phase!=='play')return;
+    g.reveals++;g.wrong=[];fill(g.ws[g.wi]);
+  },
+  ragain:function(){clearTimeout(rTimer);newRocketGame();renderMain()},
+  copy:function(b){
+    var pre=document.getElementById(b.dataset.src);
+    var old=b.textContent;
+    function fallback(){
+      var r=document.createRange();r.selectNodeContents(pre);
+      var s=window.getSelection();s.removeAllRanges();s.addRange(r);
+      b.textContent='Selected, now copy';
+    }
+    try{
+      navigator.clipboard.writeText(pre.textContent).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent=old},1500)},fallback);
+    }catch(e){fallback()}
+  }
+};
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-act]');
+  if(!b||b.disabled)return;
+  var fn=actions[b.dataset.act];if(fn)fn(b);
+});
+document.addEventListener('input',function(e){
+  var t=e.target,f=t.dataset&&t.dataset.f;if(!f)return;
+  var i=+t.dataset.i,j=+t.dataset.j;
+  switch(f){
+    case 'qtitle':quizData.title=t.value;break;
+    case 'qteam':quizData.teams[i]=t.value;break;
+    case 'qsec':quizData.seconds=t.value;break;
+    case 'qshuf':quizData.shuffle=t.checked;break;
+    case 'qlayout':quizData.layout=t.value;break;
+    case 'qq':quizData.questions[i].q=t.value;break;
+    case 'qa':quizData.questions[i].a[j]=t.value;break;
+    case 'qc':quizData.questions[i].c=j;break;
+    case 'rtitle':rocketData.title=t.value;break;
+    case 'rdiff':rocketData.difficulty=t.value;break;
+    case 'rwords':
+      rocketData.words=t.value;
+      var n=parseWords().length,c=document.getElementById('rcount');
+      if(c)c.textContent=n+' word'+(n===1?'':'s')+' ready. Up to 10 are picked at random each launch, and different letters go missing every time.';
+      break;
+  }
+});
+document.addEventListener('keydown',function(e){
+  if(mode[tab]!=='play'||e.ctrlKey||e.metaKey||e.altKey)return;
+  var a=document.activeElement;
+  if(a&&/^(INPUT|TEXTAREA|SELECT|BUTTON)$/.test(a.tagName)&&(e.key===' '||e.key==='Enter'))return;
+  if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;
+  var k=e.key;
+  if(tab==='rocket'){
+    if(/^[a-zA-Z]$/.test(k)){e.preventDefault();rKey(k.toUpperCase())}
+    return;
+  }
+  var g=qg;if(!g||!g.qs.length)return;
+  if(g.phase==='question'){
+    var idx='abcd'.indexOf(k.toLowerCase());
+    if(k.length===1&&idx>-1&&idx<g.qs[g.qi].answers.length&&g.hidden.indexOf(idx)<0){e.preventDefault();answer(idx)}
+    else if(k.toLowerCase()==='l'){e.preventDefault();actions.q5050()}
+  }else if(k===' '||k==='Enter'||k==='ArrowRight'){
+    e.preventDefault();
+    if(g.phase==='intro')startQ();
+    else if(g.phase==='feedback')actions.qnext();
+    else if(g.phase==='end')actions.qagain();
+  }
+});
+window.addEventListener('resize',fit);
+document.addEventListener('fullscreenchange',fit);
+document.addEventListener('webkitfullscreenchange',fit);
+
+resetGames();
+renderAll();
+})();
+</script>
+
+</body>
+</html>
