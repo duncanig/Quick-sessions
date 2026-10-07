@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Igloo Case Study Room: a branching decision-room template for an 8000 x 1080 display.">
+<style>
+:root{color-scheme:light}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>Igloo Case Study Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500&family=Figtree:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap">
+<style>
+/* Layout: teacher chrome and edit forms are normal responsive page UI.
+   The play area is a fixed 8000x1080 stage read left to right: situation, key facts, decisions,
+   with the path taken so far running along the bottom. The stage keeps its own dark colours in both themes. */
+:root{
+  --bg:#EAF1F6; --surface:#F8FBFD; --surface2:#DDE9F1; --fg:#0F2233; --muted:#4F6577; --line:#BCCEDB;
+  --accent:#D9480F; --accent-fg:#FFFFFF; --ice:#1B7DA6;
+  --good:#177A4C; --good-bg:#DCF3E7; --bad:#B42323; --bad-bg:#FBE2E2; --warn:#8A5A00;
+  --st-fg:#EAF4FB; --st-mut:#93B1C8; --st-card:rgba(255,255,255,.07); --st-line:rgba(255,255,255,.2);
+  --st-accent:#FF8A4C; --st-accent-fg:#1B0D04; --st-ice:#6CCBEA; --st-good:#4ADE9A; --st-bad:#FF8585; --st-warn:#FFC857;
+  --font-display:'Unbounded','Trebuchet MS',sans-serif;
+  --font-body:'Figtree','Segoe UI',system-ui,sans-serif;
+  --font-mono:'DM Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0B1624; --surface:#122236; --surface2:#1B3049; --fg:#E6F1F8; --muted:#92ABBE; --line:#294560;
+    --accent:#FF8A4C; --accent-fg:#1B0D04; --ice:#6CCBEA;
+    --good:#4ADE9A; --good-bg:#12382A; --bad:#FF8585; --bad-bg:#3C1B1F; --warn:#FFC857;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B1624; --surface:#122236; --surface2:#1B3049; --fg:#E6F1F8; --muted:#92ABBE; --line:#294560;
+  --accent:#FF8A4C; --accent-fg:#1B0D04; --ice:#6CCBEA;
+  --good:#4ADE9A; --good-bg:#12382A; --bad:#FF8585; --bad-bg:#3C1B1F; --warn:#FFC857;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.5;padding-inline:16px;padding-block:28px 48px}
+.wrap{max-width:1180px;margin-inline:auto;display:flex;flex-direction:column;gap:18px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--ice);outline-offset:2px}
+h1,h2,h3,p,ul,ol{margin:0}
+ul,ol{padding:0;list-style:none}
+.mono{font-family:var(--font-mono);font-weight:500}
+.eyebrow{font-family:var(--font-mono);font-weight:500;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.hint{color:var(--muted);font-size:.88rem}
+.small{font-size:.85rem}
+
+.top{display:flex;flex-direction:column;gap:8px}
+.top h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,5vw,2.6rem);line-height:1.08;text-wrap:balance}
+.lede{max-width:66ch;color:var(--muted)}
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.bar .right{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);background:var(--surface2);border-radius:11px;padding:3px}
+.seg button{border:0;background:transparent;padding:7px 18px;border-radius:8px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.btn{padding:10px 18px;border-radius:10px;border:2px solid var(--accent);background:var(--accent);color:var(--accent-fg);font-weight:700}
+.btn.secondary{background:transparent;border-color:var(--line);color:var(--fg)}
+.btn.secondary:hover:not(:disabled){border-color:var(--ice)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted);text-decoration:underline;padding:6px 8px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.foot{color:var(--muted);font-size:.88rem;max-width:80ch}
+.keys-hint{color:var(--muted);font-size:.88rem}
+.msg{font-weight:600;min-height:1.4em}
+
+/* stage host */
+.scroller{overflow-x:auto;border-radius:12px;background:#000}
+.viewport{position:relative;width:100%;aspect-ratio:8000/1080;overflow:hidden;background:#000}
+.scroller.real .viewport{width:8000px;max-width:none}
+.viewport:fullscreen{aspect-ratio:auto;width:100vw;height:100vh}
+.stage{position:absolute;left:0;top:0;width:8000px;height:1080px;transform-origin:0 0;overflow:hidden;color:var(--st-fg);font-family:var(--font-body);user-select:none;-webkit-user-select:none;
+  background:
+   radial-gradient(2800px 800px at 88% 122%,rgba(255,138,76,.15),transparent 70%),
+   radial-gradient(2600px 700px at 8% -12%,rgba(108,203,234,.2),transparent 70%),
+   linear-gradient(180deg,#07101F,#0E1F38)}
+.stage button{font-family:inherit;color:inherit}
+
+.c-head{position:absolute;left:260px;right:260px;top:62px;display:flex;justify-content:space-between;align-items:baseline;gap:40px;font-family:var(--font-mono);font-size:32px;letter-spacing:.18em;text-transform:uppercase;color:var(--st-mut)}
+.c-case{color:var(--st-fg);letter-spacing:.06em;text-transform:none;font-size:36px}
+.c-main{position:absolute;left:260px;right:260px;top:150px;height:770px;display:flex;gap:140px}
+.z{position:relative;display:flex;flex-direction:column;gap:26px;min-width:0;flex:1 1 0}
+.z+.z::before{content:"";position:absolute;left:-70px;top:0;bottom:0;border-left:2px solid var(--st-line)}
+.z-sit{flex-grow:23}.z-ev{flex-grow:19}.z-dec{flex-grow:30}
+.c-lab{font-family:var(--font-mono);font-size:30px;letter-spacing:.22em;text-transform:uppercase;color:var(--st-mut)}
+.c-title{font-family:var(--font-display);font-weight:700;font-size:62px;line-height:1.1;text-wrap:balance}
+.c-text{font-size:52px;line-height:1.34}
+.c-text.m{font-size:47px}.c-text.s{font-size:42px}
+.badge{align-self:flex-start;font-family:var(--font-mono);font-size:34px;letter-spacing:.14em;text-transform:uppercase;padding:10px 26px;border-radius:99px;border:4px solid}
+.badge.good{color:var(--st-good);border-color:var(--st-good);background:rgba(74,222,154,.14)}
+.badge.mixed{color:var(--st-warn);border-color:var(--st-warn);background:rgba(255,200,87,.14)}
+.badge.poor{color:var(--st-bad);border-color:var(--st-bad);background:rgba(255,133,133,.14)}
+
+.facts{display:flex;flex-direction:column;gap:22px}
+.facts li{border-left:8px solid var(--st-accent);padding:4px 0 4px 28px;display:flex;flex-direction:column;gap:2px}
+.facts .fl{font-family:var(--font-mono);font-size:30px;letter-spacing:.1em;text-transform:uppercase;color:var(--st-mut)}
+.facts .fv{font-size:56px;font-weight:700;line-height:1.1}
+.facts.tight{gap:14px}.facts.tight .fv{font-size:46px}
+.debrief{font-size:44px;line-height:1.38}
+
+.decs{display:flex;flex-direction:column;gap:20px}
+.dc{position:relative;isolation:isolate;display:flex;align-items:center;gap:26px;padding:22px 28px;border:4px solid var(--st-line);border-radius:26px;background:var(--st-card);overflow:hidden}
+.dc .vb{position:absolute;left:0;top:0;bottom:0;background:rgba(255,138,76,.26);z-index:-1;transition:width .3s}
+.dc .kk{flex:none;width:72px;height:72px;border-radius:18px;background:rgba(255,255,255,.14);display:grid;place-items:center;font-family:var(--font-mono);font-size:40px}
+.dc .dt{flex:1;min-width:0;font-size:42px;font-weight:600;line-height:1.2}
+.dc.few .dt{font-size:50px}
+.tally{display:flex;align-items:center;gap:12px;flex:none}
+.tally .cn{font-family:var(--font-mono);font-size:52px;min-width:56px;text-align:center;font-variant-numeric:tabular-nums}
+.rb{width:64px;height:64px;border-radius:50%;border:3px solid var(--st-line);background:transparent;font-size:40px;line-height:1;display:grid;place-items:center;padding:0}
+.rb:hover:not(:disabled){border-color:var(--st-ice)}
+.sbtn{font-size:40px;font-weight:700;padding:18px 36px;border-radius:20px;border:4px solid var(--st-accent);background:var(--st-accent);color:var(--st-accent-fg);flex:none}
+.sbtn.alt{background:transparent;border-color:var(--st-line);color:var(--st-fg)}
+.sbtn.alt:hover:not(:disabled){border-color:var(--st-ice)}
+.sbtn:disabled{opacity:.35;cursor:not-allowed}
+.s-row{display:flex;flex-wrap:wrap;gap:18px;align-items:center}
+.path{display:flex;flex-direction:column;gap:14px;counter-reset:pt}
+.path li{counter-increment:pt;display:flex;gap:20px;align-items:baseline;font-size:40px;line-height:1.25}
+.path li::before{content:counter(pt);flex:none;width:52px;height:52px;border-radius:50%;background:var(--st-fg);color:#07122A;display:grid;place-items:center;font-family:var(--font-mono);font-size:30px;position:relative;top:6px}
+
+.trail{position:absolute;left:260px;right:260px;top:948px;display:flex;align-items:center;gap:20px;white-space:nowrap}
+.trail .lab{font-family:var(--font-mono);font-size:28px;letter-spacing:.2em;color:var(--st-mut);margin-right:10px}
+.trail .pill{max-width:1050px;overflow:hidden;text-overflow:ellipsis;padding:12px 26px;border-radius:99px;border:3px solid var(--st-line);font-size:32px;color:var(--st-mut)}
+.trail .pill.cur{border-color:var(--st-accent);color:var(--st-fg)}
+.trail .ar{font-size:36px;color:var(--st-mut)}
+.emptyst{position:absolute;inset:0;display:flex;flex-direction:column;gap:30px;align-items:center;justify-content:center;font-size:56px;text-align:center}
+
+/* edit forms */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:clamp(16px,3vw,28px);display:flex;flex-direction:column;gap:20px;min-width:0}
+.panel h2{font-family:var(--font-display);font-weight:700;font-size:clamp(1.1rem,3.4vw,1.5rem);line-height:1.2;text-wrap:balance}
+.edit{display:flex;flex-direction:column;gap:20px}
+.edit h3{font-family:var(--font-display);font-weight:500;font-size:1rem}
+.field{display:flex;flex-direction:column;gap:6px;border:0;padding:0;margin:0;min-width:0}
+.field>span,.field legend{font-weight:600;font-size:.9rem;padding:0}
+.field input[type=text],.field select,.field textarea,.cr input[type=text],.cr select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);min-width:0}
+.field textarea{resize:vertical;line-height:1.5}
+.check{display:flex;gap:10px;align-items:center;font-weight:500}
+.qcard{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--bg);display:flex;flex-direction:column;gap:12px}
+.qcard-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}
+.qcard-h .l{display:flex;gap:10px;align-items:center}
+.tag{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:2px 10px;border-radius:99px;background:var(--surface2)}
+.tag.start{background:var(--accent);color:var(--accent-fg)}
+.tag.warn{background:transparent;border:1px solid var(--warn);color:var(--warn)}
+.cr{display:grid;grid-template-columns:3fr 2fr;gap:10px}
+.cr .lab{grid-column:1/-1;font-weight:600;font-size:.9rem}
+.paste{border:1px dashed var(--line);border-radius:14px;padding:14px 16px}
+.paste summary{font-weight:700;cursor:pointer}
+.paste .inner{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+pre.prompt{margin:0;white-space:pre-wrap;word-break:break-word;font-family:var(--font-mono);font-size:.82rem;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px}
+@media (max-width:560px){
+  .cr{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">Igloo concept prototype · 8000 × 1080</p>
+    <h1>Case Study Room</h1>
+    <p class="lede">A branching case for the whole room to work through. The group discusses each decision, takes a quick show of hands, and the lecturer picks the option. The story changes with every choice. To use a different case, change the scenes in Edit or paste one written by an AI tool.</p>
+  </header>
+  <div class="bar" id="bar"></div>
+  <main id="host"></main>
+  <p class="foot">Concept prototype for customer research. The sample case is fictional and written for illustration, so a lecturer should check any legal or professional detail before teaching from it. Edits last until the page is closed. This has not been tested on a real display yet.</p>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(s){return document.querySelector(s)};
+var esc=function(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+
+var mode='play',real=false;
+
+/* ---------- content the lecturer edits ---------- */
+var D={
+  title:'Data breach at Northbeam Health',
+  start:'start',
+  scenes:[
+    {id:'start',title:'Friday, 16:40: the alert',
+     text:'Northbeam Health runs an online booking service. A junior analyst has noticed that a database backup was reachable from the internet with no password. It has been that way for six days. You are the head of IT and you have just been told.',
+     facts:'Exposure window: 6 days\nCustomers affected: About 18,000\nData in the file: Names, emails, appointment dates\nAccess logs: Partly missing',
+     choices:[{t:'Lock down the backup now and start investigating',to:'secure'},{t:'Wait for Monday, when the full team is in',to:'wait'},{t:'Delete the backup and say nothing',to:'delete'}],end:'',debrief:''},
+    {id:'secure',title:'17:10: contained, but the clock is running',
+     text:'The backup is locked. The logs that survive show three unfamiliar addresses downloading the file during the six days. You do not yet know who they are or what they did with it. The company lawyer reminds you that a reporting deadline now applies.',
+     facts:'Time since discovery: 1 hour\nUnknown downloads: 3\nRegulator deadline: 72 hours\nLawyer: On the phone',
+     choices:[{t:'Report to the regulator now and prepare to tell customers',to:'report'},{t:'Hire outside investigators and report once they conclude',to:'hold'}],end:'',debrief:''},
+    {id:'wait',title:'Sunday, 20:00: it leaks',
+     text:'Nobody locked the backup over the weekend. A security researcher has posted that the file is open to anyone, and a local news site has picked it up. Customers are phoning the helpline and staff do not know what to say.',
+     facts:'Time since discovery: 51 hours\nHelpline calls: Rising\nPress interest: Local news\nRegulator deadline: 21 hours left',
+     choices:[{t:'Lock it down, report to the regulator tonight and apologise',to:'end_late'},{t:'Issue a statement saying no customer data was affected',to:'end_deny'}],end:'',debrief:''},
+    {id:'delete',title:'Monday: the deletion is noticed',
+     text:'The backup is gone, and so is the only record of who downloaded it. A routine audit has spotted the deletion and asks why. The analyst who raised the alert is worried about being blamed.',
+     facts:'Evidence left: None\nStaff who know: 3\nAudit meeting: Today at 14:00',
+     choices:[{t:'Tell the board what happened and report it',to:'end_cover'},{t:'Say the file was deleted as routine housekeeping',to:'end_lie'}],end:'',debrief:''},
+    {id:'report',title:'Hour 20: the regulator has been told',
+     text:'You have reported the breach to the Information Commissioner\'s Office with the facts you have so far. Now you must decide how to tell the customers.',
+     facts:'Time since discovery: 20 hours\nCustomers who may be affected: About 18,000\nCustomers confirmed affected: Unknown\nHelpline: Ready on Monday',
+     choices:[{t:'Email every customer with plain advice and a helpline number',to:'end_good'},{t:'Email only the customers you can prove were affected',to:'end_partial'}],end:'',debrief:''},
+    {id:'hold',title:'Day 3: the investigation is not finished',
+     text:'The investigators have found that one of the unfamiliar addresses belongs to a known data broker. Their full report is still a week away. Seventy hours have passed since you were told.',
+     facts:'Time since discovery: 70 hours\nRegulator deadline: 2 hours left\nFull report due: In 7 days',
+     choices:[{t:'Report now with what you know and update the regulator later',to:'end_update'},{t:'Wait for the full report',to:'end_missed'}],end:'',debrief:''},
+    {id:'end_good',title:'Open, early and clear',
+     text:'You secured the data, reported within 20 hours and told every customer in plain language. Some customers were angry, but few were surprised, and the regulator noted how quickly you acted.',
+     facts:'',choices:[],end:'good',
+     debrief:'A notifiable breach must be reported to the regulator within 72 hours of becoming aware of it, and people affected must be told without undue delay when the risk to them is high.\n\nDiscuss: Why might telling every customer be better than telling only those you can prove were affected? What did acting early make possible later?'},
+    {id:'end_update',title:'Just in time',
+     text:'You reported with two hours to spare and sent an update when the investigation finished. The regulator accepted that the first report was incomplete. Customers heard late, and some asked why it took three days.',
+     facts:'',choices:[],end:'mixed',
+     debrief:'A first report can be incomplete and updated later. Waiting for certainty is not a reason to miss the deadline.\n\nDiscuss: What did the outside investigators add, and what did waiting for them cost?'},
+    {id:'end_partial',title:'Some customers left in the dark',
+     text:'Because the logs were incomplete, you could prove harm for only a few hundred customers. Thousands of others were never told, and learned about it from the news a month later.',
+     facts:'',choices:[],end:'mixed',
+     debrief:'When you cannot tell who was affected, treating everyone who might be affected as affected is usually the safer and fairer choice.\n\nDiscuss: Who pays the price for missing logs? What should have been in place before the breach?'},
+    {id:'end_late',title:'Inside the deadline, outside people\'s trust',
+     text:'You reported with hours to spare, but customers heard the news from the press first. The regulator was satisfied with the report and noted that the backup should have been secured on Friday.',
+     facts:'',choices:[],end:'mixed',
+     debrief:'Meeting the legal deadline is the minimum. Delay between discovery and action is what turned a security failure into a public story.\n\nDiscuss: What would have changed if the backup had been secured on Friday evening?'},
+    {id:'end_cover',title:'Honest, but damaged',
+     text:'The board and the regulator were told on Monday, within the deadline. But with the backup deleted, nobody can say who downloaded the data, so you cannot tell customers who was affected.',
+     facts:'',choices:[],end:'mixed',
+     debrief:'Evidence about a breach should be preserved, even when the aim is to limit harm. Admitting the problem promptly helped. Deleting the logs made everything else harder.\n\nDiscuss: What should the analyst have been told to do with the backup, and by whom?'},
+    {id:'end_deny',title:'A statement that did not survive',
+     text:'Two days later the researcher shows that customer records were downloaded. The company\'s statement is proved false, the regulator is told late, and trust collapses.',
+     facts:'',choices:[],end:'poor',
+     debrief:'Denying a breach before you know the facts adds a second problem to the first. Misleading customers and missing the reporting deadline can both lead to enforcement action.\n\nDiscuss: What facts did you actually have when you wrote the statement?'},
+    {id:'end_lie',title:'The cover-up',
+     text:'The audit sees through the housekeeping explanation within a week. Deleting evidence and misleading colleagues turns a security failure into a conduct issue, and the regulator is told weeks late.',
+     facts:'',choices:[],end:'poor',
+     debrief:'Concealment is usually worse than the original incident. It destroys evidence, removes the chance to protect customers early and puts individuals at personal risk.\n\nDiscuss: What pressures make concealment tempting, and how can an organisation reduce them?'},
+    {id:'end_missed',title:'The deadline passes',
+     text:'The full report arrives a week later, but the reporting deadline passed five days earlier. The regulator now treats the late notification as a separate failing.',
+     facts:'',choices:[],end:'poor',
+     debrief:'Do not wait for a complete picture before reporting. Report what you know by the deadline and say that the investigation is continuing.\n\nDiscuss: What would you need in place to make that call quickly at 2 a.m.?'}
+  ]
+};
+var CASE_PROMPT='Write a branching case study for [course and level] about [topic]. Use exactly this format, one item per line, with no extra text. Give 5 to 8 decision scenes plus at least 3 endings (one good, one mixed, one poor). Each decision scene needs 2 to 4 choices. Scene ids must be short words with no spaces.\n\nCASE: Title of the case\nSCENE: start\nTITLE: Short scene title\nTEXT: What is happening, in 2 to 4 sentences.\nFACT: Label: value\nFACT: Label: value\nCHOICE: What the group could do => next_scene_id\nCHOICE: Another option => another_scene_id\n\nSCENE: ending_one\nTITLE: Short ending title\nTEXT: What happened as a result.\nEND: good\nDEBRIEF: What this teaches, plus one discussion question.';
+
+/* ---------- helpers ---------- */
+function scene(id){for(var i=0;i<D.scenes.length;i++){if(D.scenes[i].id===id)return D.scenes[i]}return null}
+function parseFacts(str){
+  return String(str||'').split('\n').map(function(l){return l.trim()}).filter(Boolean).map(function(l){
+    var k=l.indexOf(':');
+    return k>0?{l:l.slice(0,k).trim(),v:l.slice(k+1).trim()}:{l:'',v:l};
+  });
+}
+function validChoices(s){
+  var out=[];s.choices.forEach(function(c,i){if(c.t.trim())out.push({i:i,t:c.t.trim(),to:c.to})});return out;
+}
+function reachable(){
+  var seen={},q=[D.start];
+  while(q.length){var id=q.pop();if(seen[id])continue;seen[id]=1;var s=scene(id);if(s)s.choices.forEach(function(c){if(c.to&&!seen[c.to])q.push(c.to)})}
+  return seen;
+}
+var OUT={good:'Good outcome',mixed:'Mixed outcome',poor:'Poor outcome'};
+
+/* ---------- play engine ---------- */
+var cg=null;
+function newGame(){cg={id:D.start,hist:[],votes:[]}}
+function choose(i){
+  var s=scene(cg.id);if(!s||s.end)return;
+  var c=s.choices[i];if(!c||!c.t.trim()||!scene(c.to))return;
+  cg.hist.push({from:cg.id,i:i});cg.id=c.to;cg.votes=[];renderMain();
+}
+function back(){
+  if(!cg.hist.length)return;
+  var h=cg.hist.pop();cg.id=h.from;cg.votes=[];renderMain();
+}
+function restart(){newGame();renderMain()}
+
+function trailHTML(s){
+  var items=cg.hist.map(function(h){var sc=scene(h.from);return {t:sc&&sc.choices[h.i]?sc.choices[h.i].t:'',cur:false}});
+  items.push({t:(s.end?'Outcome: ':'Now: ')+s.title,cur:true});
+  if(items.length>6)items=[{t:'…',cur:false}].concat(items.slice(-5));
+  return '<div class="trail"><span class="lab">PATH</span>'+items.map(function(it){
+    return '<span class="pill'+(it.cur?' cur':'')+'">'+esc(it.t)+'</span>';
+  }).join('<span class="ar">→</span>')+'</div>';
+}
+function stageHTML(){
+  var s=scene(cg.id);
+  if(!s)return '<div class="emptyst"><p>This case has no scenes yet.</p><p>Choose Edit and add a scene.</p></div>';
+  var head='<div class="c-head"><span>Case study</span><span class="c-case">'+esc(D.title)+'</span><span>'+(s.end?'Outcome':'Decision '+(cg.hist.length+1))+'</span></div>';
+  var len=s.text.length,tcls=len>400?' s':(len>280?' m':'');
+  var sit='<div class="z z-sit">'
+    +(s.end?'<span class="badge '+s.end+'">'+OUT[s.end]+'</span>':'<p class="c-lab">The situation</p>')
+    +'<h2 class="c-title">'+esc(s.title)+'</h2><p class="c-text'+tcls+'">'+esc(s.text)+'</p></div>';
+  var mid='',dec='';
+  if(s.end){
+    mid='<div class="z z-ev"><p class="c-lab">Debrief</p>'+String(s.debrief||'').split('\n').filter(function(l){return l.trim()}).map(function(l){return '<p class="debrief">'+esc(l)+'</p>'}).join('')+'</div>';
+    dec='<div class="z z-dec"><p class="c-lab">Your decisions</p><ol class="path">'+cg.hist.map(function(h){var sc=scene(h.from);return '<li>'+esc(sc&&sc.choices[h.i]?sc.choices[h.i].t:'')+'</li>'}).join('')+'</ol>'
+      +'<div class="s-row"><button class="sbtn alt" data-act="back" '+(cg.hist.length?'':'disabled')+'>Go back one step</button><button class="sbtn" data-act="restart">Start again</button></div></div>';
+  }else{
+    var facts=parseFacts(s.facts);
+    if(facts.length){
+      mid='<div class="z z-ev"><p class="c-lab">Key facts</p><ul class="facts'+(facts.length>5?' tight':'')+'">'+facts.map(function(f){
+        return '<li>'+(f.l?'<span class="fl">'+esc(f.l)+'</span>':'')+'<span class="fv">'+esc(f.v)+'</span></li>';
+      }).join('')+'</ul></div>';
+    }
+    var cs=validChoices(s),total=0;
+    cs.forEach(function(c){total+=cg.votes[c.i]||0});
+    dec='<div class="z z-dec"><p class="c-lab">What do you do?</p><div class="decs">'+cs.map(function(c,n){
+      var v=cg.votes[c.i]||0,pct=total?Math.round(v/total*100):0,ok=!!scene(c.to);
+      return '<div class="dc'+(cs.length<=2?' few':'')+'"><div class="vb" style="width:'+pct+'%"></div>'
+        +'<span class="kk">'+'ABCD'[n]+'</span><span class="dt">'+esc(c.t)+'</span>'
+        +'<span class="tally"><button class="rb" data-act="vote" data-i="'+c.i+'" data-d="-1" aria-label="Remove a vote">−</button><span class="cn">'+v+'</span><button class="rb" data-act="vote" data-i="'+c.i+'" data-d="1" aria-label="Add a vote">+</button></span>'
+        +'<button class="sbtn" data-act="choose" data-i="'+c.i+'" '+(ok?'':'disabled')+'>Choose</button></div>';
+    }).join('')+'</div>'
+      +(cg.hist.length?'<div class="s-row"><button class="sbtn alt" data-act="back">Go back one step</button></div>':'')+'</div>';
+  }
+  return head+'<div class="c-main">'+sit+mid+dec+'</div>'+trailHTML(s);
+}
+
+/* ---------- edit ---------- */
+var nid=1;
+function sceneLabel(s){return s.title.trim()||'Untitled scene'}
+function caseEdit(){
+  var reach=reachable();
+  var opts=function(sel){
+    return '<option value="">Choose a scene…</option>'+D.scenes.map(function(x){return '<option value="'+esc(x.id)+'" '+(x.id===sel?'selected':'')+'>'+esc(sceneLabel(x))+'</option>'}).join('');
+  };
+  var html='<section class="panel"><h2>Edit: '+esc(D.title||'Untitled case')+'</h2><div class="edit">'
+    +'<label class="field"><span>Case title</span><input type="text" id="e-ctitle" data-f="ctitle" value="'+esc(D.title)+'"></label>'
+    +'<p class="hint">A case is a set of scenes. In a decision scene, each choice leads to another scene. An ending scene shows an outcome and a debrief. The first scene marked Start begins the case.</p>';
+  D.scenes.forEach(function(s,i){
+    var isStart=s.id===D.start;
+    html+='<div class="qcard"><div class="qcard-h"><div class="l"><span class="mono">Scene '+(i+1)+'</span>'
+      +(isStart?'<span class="tag start">Start</span>':'')+(s.end?'<span class="tag">Ending</span>':'')
+      +(!reach[s.id]?'<span class="tag warn">Not reachable</span>':'')+'</div>'
+      +'<div class="actions">'+(isStart?'':'<button class="btn ghost" data-act="mkstart" data-i="'+i+'">Make this the start</button>')
+      +'<button class="btn ghost" data-act="delscene" data-i="'+i+'">Remove</button></div></div>'
+      +'<label class="field"><span>Scene title</span><input type="text" id="e-st'+i+'" data-f="stitle" data-i="'+i+'" data-r="1" value="'+esc(s.title)+'"></label>'
+      +'<label class="field"><span>What is happening</span><textarea id="e-tx'+i+'" rows="3" data-f="stext" data-i="'+i+'">'+esc(s.text)+'</textarea></label>'
+      +(s.end?'':'<label class="field"><span>Key facts, one per line, as Label: value</span><textarea id="e-fa'+i+'" rows="4" data-f="sfacts" data-i="'+i+'">'+esc(s.facts)+'</textarea></label>')
+      +'<label class="check"><input type="checkbox" id="e-en'+i+'" data-f="send" data-i="'+i+'" data-r="1" '+(s.end?'checked':'')+'> This scene is an ending</label>';
+    if(s.end){
+      html+='<label class="field"><span>Outcome</span><select id="e-eo'+i+'" data-f="sout" data-i="'+i+'">'
+        +[['good','Good outcome'],['mixed','Mixed outcome'],['poor','Poor outcome']].map(function(o){return '<option value="'+o[0]+'" '+(s.end===o[0]?'selected':'')+'>'+o[1]+'</option>'}).join('')+'</select></label>'
+        +'<label class="field"><span>Debrief and discussion questions</span><textarea id="e-db'+i+'" rows="4" data-f="sdeb" data-i="'+i+'">'+esc(s.debrief)+'</textarea></label>';
+    }else{
+      html+='<div class="field"><span>Choices (leave a choice blank to skip it)</span></div>';
+      for(var j=0;j<4;j++){
+        var c=s.choices[j]||{t:'',to:''};
+        html+='<div class="cr"><input type="text" id="e-ct'+i+'-'+j+'" data-f="ct" data-i="'+i+'" data-j="'+j+'" aria-label="Choice '+(j+1)+' text" placeholder="Choice '+(j+1)+'" value="'+esc(c.t)+'">'
+          +'<select id="e-cs'+i+'-'+j+'" data-f="cto" data-i="'+i+'" data-j="'+j+'" aria-label="Choice '+(j+1)+' leads to">'+opts(c.to)+'</select></div>';
+      }
+    }
+    html+='</div>';
+  });
+  html+='<div class="actions"><button class="btn secondary" data-act="addscene">Add a scene</button></div>'
+    +'<details class="paste"><summary>Paste a whole case from text or AI</summary><div class="inner">'
+    +'<p class="hint">Ask any AI tool with this prompt, then paste its answer below. Pasting replaces all the scenes above.</p>'
+    +'<pre class="prompt" id="cprompt">'+esc(CASE_PROMPT)+'</pre>'
+    +'<div class="actions"><button class="btn secondary" data-act="copy" data-src="cprompt">Copy prompt</button></div>'
+    +'<label class="field"><span>Pasted case</span><textarea id="cpaste" rows="10"></textarea></label>'
+    +'<div class="actions"><button class="btn" data-act="cparse">Use this case</button><span class="msg" id="cpmsg" role="status"></span></div>'
+    +'</div></details></div></section>';
+  return html;
+}
+function parseCase(text){
+  var scenes=[],cur=null,title='',bad=0;
+  text.split('\n').forEach(function(raw){
+    var l=raw.trim();if(!l)return;
+    var m=l.match(/^([A-Za-z]+)\s*:\s*(.*)$/);if(!m)return;
+    var k=m[1].toUpperCase(),v=m[2].trim();
+    if(k==='CASE'){title=v;return}
+    if(k==='SCENE'){cur={id:v.replace(/\s+/g,'_')||('s'+scenes.length),title:'',text:'',facts:'',choices:[],end:'',debrief:''};scenes.push(cur);return}
+    if(!cur)return;
+    if(k==='TITLE')cur.title=v;
+    else if(k==='TEXT')cur.text=v;
+    else if(k==='FACT')cur.facts+=(cur.facts?'\n':'')+v;
+    else if(k==='CHOICE'){var p=v.split('=>');cur.choices.push({t:p[0].trim(),to:(p[1]||'').trim().replace(/\s+/g,'_')})}
+    else if(k==='END'){var e=v.toLowerCase();cur.end=(e==='good'||e==='poor')?e:'mixed'}
+    else if(k==='DEBRIEF')cur.debrief=v;
+  });
+  var ids={};scenes.forEach(function(s){ids[s.id]=1});
+  scenes.forEach(function(s){
+    s.choices.forEach(function(c){if(c.to&&!ids[c.to]){c.to='';bad++}});
+    s.choices=s.choices.slice(0,4);
+    while(!s.end&&s.choices.length<4)s.choices.push({t:'',to:''});
+  });
+  return {title:title,scenes:scenes,bad:bad};
+}
+
+/* ---------- shell ---------- */
+var ro=null;
+function fit(){
+  var vp=$('#vp'),st=$('#stage');if(!vp||!st)return;
+  var w=vp.clientWidth,h=vp.clientHeight;if(!w||!h)return;
+  var s=Math.min(w/8000,h/1080);
+  st.style.transform='translate('+((w-8000*s)/2)+'px,'+((h-1080*s)/2)+'px) scale('+s+')';
+}
+function renderChrome(){
+  var play=mode==='play';
+  $('#bar').innerHTML='<div class="seg" role="group" aria-label="Mode">'
+    +'<button data-act="mode" data-v="play" aria-pressed="'+play+'">Play</button>'
+    +'<button data-act="mode" data-v="edit" aria-pressed="'+!play+'">Edit</button></div>'
+    +(play?'<div class="right"><span class="keys-hint">Keys: A to D choose, Backspace goes back.</span>'
+      +'<button class="btn secondary" data-act="real">'+(real?'Fit to screen':'Real size (8000 px)')+'</button>'
+      +'<button class="btn" data-act="fs">Fullscreen</button><span class="msg small" id="fsmsg" role="status"></span></div>':'');
+}
+function renderMain(){
+  var host=$('#host');
+  if(mode!=='play'){host.dataset.kind='edit';host.innerHTML=caseEdit();return}
+  if(host.dataset.kind!=='play'){
+    host.dataset.kind='play';
+    host.innerHTML='<div class="scroller'+(real?' real':'')+'" id="scroller"><div class="viewport" id="vp"><div class="stage" id="stage"></div></div></div>';
+    if(ro)ro.disconnect();
+    if(window.ResizeObserver){ro=new ResizeObserver(fit);ro.observe($('#vp'))}
+  }
+  $('#stage').innerHTML=stageHTML();
+  fit();
+}
+var actions={
+  mode:function(b){mode=b.dataset.v;newGame();renderChrome();renderMain()},
+  real:function(){
+    real=!real;var sc=$('#scroller');if(sc)sc.classList.toggle('real',real);
+    renderChrome();fit();
+  },
+  fs:function(){
+    var vp=$('#vp'),msg=$('#fsmsg');
+    function fail(){if(msg)msg.textContent='Fullscreen is blocked here. Press F11 in your browser instead.'}
+    try{
+      var fn=vp.requestFullscreen||vp.webkitRequestFullscreen;
+      if(!fn){fail();return}
+      var p=fn.call(vp);if(p&&p.catch)p.catch(fail);
+    }catch(e){fail()}
+  },
+  choose:function(b){choose(+b.dataset.i)},
+  vote:function(b){
+    var i=+b.dataset.i;cg.votes[i]=Math.max(0,(cg.votes[i]||0)+ +b.dataset.d);renderMain();
+  },
+  back:function(){back()},
+  restart:function(){restart()},
+  addscene:function(){
+    var id='scene'+(nid++);while(scene(id))id='scene'+(nid++);
+    D.scenes.push({id:id,title:'',text:'',facts:'',choices:[{t:'',to:''},{t:'',to:''},{t:'',to:''},{t:'',to:''}],end:'',debrief:''});
+    renderMain();var el=document.getElementById('e-st'+(D.scenes.length-1));if(el)el.focus();
+  },
+  delscene:function(b){
+    var s=D.scenes[+b.dataset.i];if(!s)return;
+    D.scenes.splice(+b.dataset.i,1);
+    D.scenes.forEach(function(x){x.choices.forEach(function(c){if(c.to===s.id)c.to=''})});
+    if(D.start===s.id)D.start=D.scenes.length?D.scenes[0].id:'';
+    renderMain();
+  },
+  mkstart:function(b){D.start=D.scenes[+b.dataset.i].id;renderMain()},
+  cparse:function(){
+    var r=parseCase(document.getElementById('cpaste').value),msg=document.getElementById('cpmsg');
+    if(!r.scenes.length){msg.textContent='No scenes found. Start each scene with SCENE: and a short id.';return}
+    D.scenes=r.scenes;D.start=r.scenes[0].id;if(r.title)D.title=r.title;
+    renderMain();
+    var d=document.querySelector('details.paste');if(d)d.open=true;
+    var m2=document.getElementById('cpmsg');
+    if(m2)m2.textContent=r.scenes.length+' scenes added above.'+(r.bad?' '+r.bad+' choice'+(r.bad===1?'':'s')+' pointed to a scene that does not exist and were cleared.':'');
+  },
+  copy:function(b){
+    var pre=document.getElementById(b.dataset.src),old=b.textContent;
+    function fallback(){
+      var r=document.createRange();r.selectNodeContents(pre);
+      var s=window.getSelection();s.removeAllRanges();s.addRange(r);
+      b.textContent='Selected, now copy';
+    }
+    try{navigator.clipboard.writeText(pre.textContent).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent=old},1500)},fallback)}catch(e){fallback()}
+  }
+};
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-act]');
+  if(!b||b.disabled)return;
+  var fn=actions[b.dataset.act];if(fn)fn(b);
+});
+function setField(t){
+  var f=t.dataset.f,i=+t.dataset.i,j=+t.dataset.j,s=D.scenes[i];
+  if(f==='ctitle'){D.title=t.value;return}
+  if(!s)return;
+  switch(f){
+    case 'stitle':s.title=t.value;break;
+    case 'stext':s.text=t.value;break;
+    case 'sfacts':s.facts=t.value;break;
+    case 'send':s.end=t.checked?(s.end||'mixed'):'';break;
+    case 'sout':s.end=t.value;break;
+    case 'sdeb':s.debrief=t.value;break;
+    case 'ct':s.choices[j]=s.choices[j]||{t:'',to:''};s.choices[j].t=t.value;break;
+    case 'cto':s.choices[j]=s.choices[j]||{t:'',to:''};s.choices[j].to=t.value;break;
+  }
+}
+document.addEventListener('input',function(e){var t=e.target;if(t.dataset&&t.dataset.f)setField(t)});
+document.addEventListener('change',function(e){var t=e.target;if(t.dataset&&t.dataset.f&&t.dataset.r){setField(t);renderMain()}});
+document.addEventListener('keydown',function(e){
+  if(mode!=='play'||e.ctrlKey||e.metaKey||e.altKey)return;
+  var a=document.activeElement;
+  if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;
+  var s=scene(cg.id);
+  if(e.key==='Backspace'){e.preventDefault();back();return}
+  if(!s||s.end)return;
+  var idx='abcd'.indexOf(e.key.toLowerCase());
+  if(e.key.length===1&&idx>-1){var cs=validChoices(s);if(cs[idx]){e.preventDefault();choose(cs[idx].i)}}
+});
+window.addEventListener('resize',fit);
+document.addEventListener('fullscreenchange',fit);
+document.addEventListener('webkitfullscreenchange',fit);
+
+newGame();
+renderChrome();
+renderMain();
+})();
+</script>
+
+</body>
+</html>
