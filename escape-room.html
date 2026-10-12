@@ -1,0 +1,750 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Igloo Escape Room: a nursing and healthcare escape room template for an 8000 x 1080 display.">
+<style>
+:root{color-scheme:light}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+</style>
+<title>Igloo Escape Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@500&family=Figtree:wght@400;500;600;700&family=Unbounded:wght@500;700&display=swap">
+<style>
+/* Layout: teacher chrome and edit forms are normal responsive page UI.
+   The play area is a fixed 8000x1080 stage drawn as a ward corridor: a row of doors across the top
+   (one per puzzle), the story on the left, the puzzle in the middle, what the team has found on the right,
+   and a fuse bar for the countdown along the bottom. The stage keeps its own dark colours in both themes. */
+:root{
+  --bg:#EAF1F6; --surface:#F8FBFD; --surface2:#DDE9F1; --fg:#0F2233; --muted:#4F6577; --line:#BCCEDB;
+  --accent:#D9480F; --accent-fg:#FFFFFF; --ice:#1B7DA6;
+  --good:#177A4C; --good-bg:#DCF3E7; --bad:#B42323; --bad-bg:#FBE2E2; --warn:#8A5A00;
+  --st-fg:#EAF6F6; --st-mut:#8FB6B8; --st-card:rgba(255,255,255,.07); --st-line:rgba(255,255,255,.2);
+  --st-accent:#FFB547; --st-accent-fg:#2A1A00; --st-ice:#5CE1D0; --st-good:#4ADE9A; --st-bad:#FF8585;
+  --font-display:'Unbounded','Trebuchet MS',sans-serif;
+  --font-body:'Figtree','Segoe UI',system-ui,sans-serif;
+  --font-mono:'DM Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0B1624; --surface:#122236; --surface2:#1B3049; --fg:#E6F1F8; --muted:#92ABBE; --line:#294560;
+    --accent:#FF8A4C; --accent-fg:#1B0D04; --ice:#6CCBEA;
+    --good:#4ADE9A; --good-bg:#12382A; --bad:#FF8585; --bad-bg:#3C1B1F; --warn:#FFC857;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0B1624; --surface:#122236; --surface2:#1B3049; --fg:#E6F1F8; --muted:#92ABBE; --line:#294560;
+  --accent:#FF8A4C; --accent-fg:#1B0D04; --ice:#6CCBEA;
+  --good:#4ADE9A; --good-bg:#12382A; --bad:#FF8585; --bad-bg:#3C1B1F; --warn:#FFC857;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.5;padding-inline:16px;padding-block:28px 48px}
+.wrap{max-width:1180px;margin-inline:auto;display:flex;flex-direction:column;gap:18px}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--ice);outline-offset:2px}
+h1,h2,h3,p,ul,ol{margin:0}
+ul,ol{padding:0;list-style:none}
+.mono{font-family:var(--font-mono);font-weight:500}
+.eyebrow{font-family:var(--font-mono);font-weight:500;font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.hint{color:var(--muted);font-size:.88rem}
+.small{font-size:.85rem}
+
+.top{display:flex;flex-direction:column;gap:8px}
+.top h1{font-family:var(--font-display);font-weight:700;font-size:clamp(1.7rem,5vw,2.6rem);line-height:1.08;text-wrap:balance}
+.lede{max-width:66ch;color:var(--muted)}
+.bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.bar .right{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);background:var(--surface2);border-radius:11px;padding:3px}
+.seg button{border:0;background:transparent;padding:7px 18px;border-radius:8px;font-weight:600;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.btn{padding:10px 18px;border-radius:10px;border:2px solid var(--accent);background:var(--accent);color:var(--accent-fg);font-weight:700}
+.btn.secondary{background:transparent;border-color:var(--line);color:var(--fg)}
+.btn.secondary:hover:not(:disabled){border-color:var(--ice)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted);text-decoration:underline;padding:6px 8px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.actions{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.foot{color:var(--muted);font-size:.88rem;max-width:80ch}
+.keys-hint{color:var(--muted);font-size:.88rem}
+.msg{font-weight:600;min-height:1.4em}
+.sharebox{display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:14px 16px}
+.sharebox input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);font-family:var(--font-mono);font-size:.85rem}
+.banner{border:1px solid var(--ice);border-radius:12px;padding:10px 14px;background:var(--surface);font-weight:600}
+
+/* stage host */
+.scroller{overflow-x:auto;border-radius:12px;background:#000}
+.viewport{position:relative;width:100%;aspect-ratio:8000/1080;overflow:hidden;background:#000}
+.scroller.real .viewport{width:8000px;max-width:none}
+.viewport:fullscreen{aspect-ratio:auto;width:100vw;height:100vh}
+.stage{position:absolute;left:0;top:0;width:8000px;height:1080px;transform-origin:0 0;overflow:hidden;color:var(--st-fg);font-family:var(--font-body);user-select:none;-webkit-user-select:none;
+  background:
+   radial-gradient(2600px 700px at 86% 126%,rgba(92,225,208,.17),transparent 70%),
+   radial-gradient(2400px 700px at 4% -16%,rgba(255,181,71,.13),transparent 70%),
+   linear-gradient(180deg,#041119,#0A2530)}
+.stage button{font-family:inherit;color:inherit}
+
+.e-head{position:absolute;left:260px;right:260px;top:36px;height:130px;display:flex;justify-content:space-between;align-items:flex-end;gap:40px}
+.e-eyebrow{font-family:var(--font-mono);font-size:30px;letter-spacing:.24em;text-transform:uppercase;color:var(--st-mut)}
+.e-title{font-family:var(--font-display);font-weight:700;font-size:58px;line-height:1.1}
+.e-timer{position:relative;display:flex;align-items:baseline;gap:28px}
+.e-timer .tl{font-family:var(--font-mono);font-size:30px;letter-spacing:.24em;color:var(--st-mut)}
+.e-timer .tval{font-family:var(--font-mono);font-size:112px;line-height:1;font-variant-numeric:tabular-nums}
+.e-timer.low .tval{color:var(--st-bad);animation:blink 1s steps(2) infinite}
+.e-timer .pen{position:absolute;right:0;top:-40px;font-family:var(--font-mono);font-size:40px;color:var(--st-bad)}
+@keyframes blink{50%{opacity:.55}}
+.doors{position:absolute;left:260px;right:260px;top:182px;height:124px;display:flex;gap:26px}
+.door{flex:1 1 0;min-width:0;border-radius:28px 28px 8px 8px;border:4px solid var(--st-line);background:rgba(255,255,255,.05);display:flex;flex-direction:column;justify-content:center;gap:2px;padding:0 24px}
+.door .dn{font-family:var(--font-mono);font-size:26px;letter-spacing:.18em;color:var(--st-mut)}
+.door .dt{font-size:34px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.door.solved{border-color:var(--st-good);background:rgba(74,222,154,.12)}
+.door.solved .dn{color:var(--st-good)}
+.door.now{border-color:var(--st-accent);background:rgba(255,181,71,.15)}
+.door.now .dn{color:var(--st-accent)}
+.e-main{position:absolute;left:260px;right:260px;top:340px;height:640px;display:flex;gap:110px}
+.z{position:relative;display:flex;flex-direction:column;gap:22px;min-width:0;flex:1 1 0}
+.z+.z::before{content:"";position:absolute;left:-55px;top:0;bottom:0;border-left:2px solid var(--st-line)}
+.z-story{flex-grow:22}.z-puz{flex-grow:39}.z-log{flex-grow:12}
+.lab{font-family:var(--font-mono);font-size:28px;letter-spacing:.22em;text-transform:uppercase;color:var(--st-mut)}
+.e-text{font-size:44px;line-height:1.32}
+.e-text.m{font-size:40px}.e-text.s{font-size:35px}
+.hintbox{padding:18px 24px;border-radius:20px;border:3px solid var(--st-accent);background:rgba(255,181,71,.12);font-size:36px;line-height:1.3}
+.hintbox b{font-family:var(--font-mono);font-size:26px;letter-spacing:.18em;display:block;margin-bottom:4px;color:var(--st-accent)}
+.fuse{position:absolute;left:260px;right:260px;top:1010px;height:16px;border-radius:8px;background:rgba(255,255,255,.12);overflow:hidden}
+.fuse .ff{height:100%;border-radius:8px;background:linear-gradient(90deg,#5CE1D0,#FFB547)}
+.fuse.low .ff{background:var(--st-bad)}
+
+.e-prompt{font-size:46px;font-weight:700;line-height:1.2;text-wrap:balance}
+.sbtn{font-size:40px;font-weight:700;padding:18px 40px;border-radius:20px;border:4px solid var(--st-accent);background:var(--st-accent);color:var(--st-accent-fg);flex:none}
+.sbtn.alt{background:transparent;border-color:var(--st-line);color:var(--st-fg)}
+.sbtn.alt:hover:not(:disabled){border-color:var(--st-ice)}
+.sbtn:disabled{opacity:.35;cursor:not-allowed}
+.s-row{display:flex;flex-wrap:wrap;gap:18px;align-items:center}
+.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-14px)}75%{transform:translateX(14px)}}
+
+.code{display:flex;gap:40px;align-items:flex-start}
+.code .left{flex:1;display:flex;flex-direction:column;gap:24px;min-width:0}
+.cd{height:150px;border-radius:24px;border:4px solid var(--st-ice);background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:flex-end;padding:0 36px;font-family:var(--font-mono);font-size:96px;font-variant-numeric:tabular-nums}
+.cd .cur{width:6px;height:90px;background:var(--st-ice);margin-left:8px;animation:blink 1s steps(2) infinite}
+.keypad{display:grid;grid-template-columns:repeat(3,130px);gap:14px;flex:none}
+.kp{height:104px;border-radius:20px;border:3px solid var(--st-line);background:rgba(255,255,255,.07);font-family:var(--font-mono);font-size:54px}
+.kp:hover{border-color:var(--st-ice)}
+
+.chs{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.ch{display:flex;align-items:center;gap:22px;padding:20px 24px;min-height:180px;border:4px solid var(--st-line);border-radius:24px;background:var(--st-card);font-size:38px;font-weight:600;text-align:left;line-height:1.2}
+.ch .k{flex:none;width:60px;height:60px;border-radius:16px;background:rgba(255,255,255,.14);display:grid;place-items:center;font-family:var(--font-mono);font-size:32px}
+.ch:hover:not(:disabled){border-color:var(--st-ice)}
+.ch.no{border-color:var(--st-bad);background:rgba(255,133,133,.16);opacity:.7}
+
+.ord{display:flex;gap:44px;align-items:flex-start}
+.pool,.placed{display:flex;flex-direction:column;gap:12px;flex:1;min-width:0}
+.chip{padding:14px 24px;border-radius:18px;border:3px solid var(--st-line);background:var(--st-card);font-size:34px;font-weight:600;text-align:left;line-height:1.2}
+.chip:hover{border-color:var(--st-ice)}
+.placed li{counter-increment:pl;display:flex;gap:18px;align-items:baseline;padding:12px 20px;border-radius:18px;background:rgba(74,222,154,.14);border:3px solid var(--st-good);font-size:32px;line-height:1.2}
+.placed{counter-reset:pl}
+.placed li::before{content:counter(pl);font-family:var(--font-mono);color:var(--st-good)}
+.slot{padding:12px 20px;border-radius:18px;border:3px dashed var(--st-line);font-size:32px;color:var(--st-mut)}
+
+.mt{display:flex;gap:70px}
+.mt .col{display:flex;flex-direction:column;gap:12px;flex:1;min-width:0}
+.mb{padding:14px 22px;border-radius:18px;border:3px solid var(--st-line);background:var(--st-card);font-size:33px;font-weight:600;text-align:left;line-height:1.2;min-height:78px}
+.mb:hover:not(:disabled){border-color:var(--st-ice)}
+.mb.sel{border-color:var(--st-accent);background:rgba(255,181,71,.18)}
+.mb.done{border-color:var(--st-good);background:rgba(74,222,154,.14);opacity:.75}
+
+.okbox{display:flex;flex-direction:column;gap:24px}
+.ok-h{font-family:var(--font-display);font-weight:700;font-size:70px;color:var(--st-good)}
+.ok-f{font-size:44px;line-height:1.3}
+.teach{padding:20px 28px;border-radius:22px;border:3px solid var(--st-ice);background:rgba(92,225,208,.1);font-size:36px;line-height:1.3}
+.teach b{display:block;font-family:var(--font-mono);font-size:26px;letter-spacing:.2em;color:var(--st-ice);margin-bottom:4px}
+
+.log{display:flex;flex-direction:column;gap:18px}
+.log li{border-left:8px solid var(--st-good);padding:2px 0 2px 22px}
+.log .lt{font-size:34px;font-weight:700}
+.log .lf{font-size:28px;color:var(--st-mut);line-height:1.25}
+.log .none{font-size:32px;color:var(--st-mut)}
+
+.center{position:absolute;left:260px;right:260px;top:340px;height:640px;display:flex;gap:110px;align-items:flex-start}
+.big{font-family:var(--font-display);font-weight:700;font-size:96px;line-height:1.05;text-wrap:balance}
+.big.win{color:var(--st-good)}.big.lose{color:var(--st-bad)}
+.stats{display:flex;flex-wrap:wrap;gap:14px 40px;font-family:var(--font-mono);font-size:36px;color:var(--st-mut)}
+.stats b{color:var(--st-fg);font-weight:500}
+.points{display:flex;flex-direction:column;gap:14px}
+.points li{font-size:33px;line-height:1.25}
+.points li b{display:block;font-size:34px}
+.emptyst{position:absolute;inset:0;display:flex;flex-direction:column;gap:30px;align-items:center;justify-content:center;font-size:56px;text-align:center}
+
+/* edit forms */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:clamp(16px,3vw,28px);display:flex;flex-direction:column;gap:20px;min-width:0}
+.panel h2{font-family:var(--font-display);font-weight:700;font-size:clamp(1.1rem,3.4vw,1.5rem);line-height:1.2;text-wrap:balance}
+.edit{display:flex;flex-direction:column;gap:20px}
+.edit h3{font-family:var(--font-display);font-weight:500;font-size:1rem}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.field{display:flex;flex-direction:column;gap:6px;border:0;padding:0;margin:0;min-width:0}
+.field>span,.field legend{font-weight:600;font-size:.9rem;padding:0}
+.field input[type=text],.field input[type=number],.field select,.field textarea,.opt input[type=text]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);min-width:0}
+.field textarea{resize:vertical;line-height:1.5}
+.qcard{border:1px solid var(--line);border-radius:14px;padding:16px;background:var(--bg);display:flex;flex-direction:column;gap:12px}
+.qcard-h{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:8px}
+.qcard-h .l{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tag{font-family:var(--font-mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;padding:2px 10px;border-radius:99px;background:var(--surface2)}
+.tag.warn{background:transparent;border:1px solid var(--warn);color:var(--warn)}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.opt{display:flex;align-items:center;gap:10px;min-width:0}
+.opt input[type=radio]{width:20px;height:20px;accent-color:var(--accent);flex:none}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.paste{border:1px dashed var(--line);border-radius:14px;padding:14px 16px}
+.paste summary{font-weight:700;cursor:pointer}
+.paste .inner{display:flex;flex-direction:column;gap:12px;margin-top:14px}
+pre.prompt{margin:0;white-space:pre-wrap;word-break:break-word;font-family:var(--font-mono);font-size:.82rem;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px}
+@media (max-width:640px){
+  .grid3,.opts,.grid2{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <p class="eyebrow">Igloo concept prototype · 8000 × 1080</p>
+    <h1>Escape Room</h1>
+    <p class="lede">A team works through locked doors against the clock. Each door is one puzzle: a code lock, a multiple-choice question, a sequence to put in order, or a set of pairs to match. The sample is a nursing and healthcare case. To make your own, change the story and puzzles in Edit, or build it on a laptop and share it as a link.</p>
+  </header>
+  <div class="bar" id="bar"></div>
+  <div id="share"></div>
+  <div id="banner"></div>
+  <main id="host"></main>
+  <p class="foot">Concept prototype for customer research. The sample clinical content is fictional and written for teaching illustration, so a lecturer should check every clinical detail before using it with students. Edits last until the page is closed unless you share a link. Share links work on the hosted copy of this page. This has not been tested on a real display yet.</p>
+</div>
+
+<script>
+(function(){
+'use strict';
+var $=function(s){return document.querySelector(s)};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var shuffle=function(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a};
+var mode='play',real=false;
+
+/* ---------- content the lecturer edits ---------- */
+var R={
+  title:'Ward 7 Lockdown',
+  story:'It is 05:40 on Ward 7. The overnight safety check has flagged a possible medication error, and the ward doors have locked until it is resolved. The day team arrives at handover and everything must be safe by then. Work through five locked rooms as a nursing team before time runs out.',
+  minutes:20,wrongPenalty:20,hintPenalty:60,
+  winText:'The doors open and the ward is safe for handover. Well done, team.',
+  loseText:'The handover team arrived before the ward was safe. Look at what you missed, then try again.',
+  puzzles:[
+    {type:'code',title:'Medication room',
+     scene:'The medication cabinet is locked with a keypad. A sticker reads: Enter the volume to give. On the wall is a prescription for a patient who cannot swallow tablets: 750 mg of an antibiotic syrup. The bottle label says 250 mg in every 5 mL.',
+     prompt:'How many millilitres should the patient receive?',answer:'15',options:['','','',''],correct:0,steps:'',pairs:'',
+     hint:'Work out how many 250 mg doses are in 750 mg, then multiply by the volume that holds one dose.',
+     found:'The cabinet opens. Inside is the patient\'s medication chart and a key card for the next room.',
+     teach:'Check every calculation with a second nurse, and confirm the right patient, drug, dose, route and time before giving any medicine.'},
+    {type:'order',title:'Resus bay',
+     scene:'A training mannequin lies on the trolley with a note: Assess in the right order, or the door stays shut. A laminated card shows five assessment steps, but they have been shuffled.',
+     prompt:'Put the ABCDE assessment steps in the order you would carry them out.',answer:'',options:['','','',''],correct:0,
+     steps:'Airway: is it open and clear?\nBreathing: rate, effort and oxygen levels\nCirculation: pulse, blood pressure and skin\nDisability: level of consciousness and blood glucose\nExposure: look at the whole patient and keep them warm',pairs:'',
+     hint:'The letters A, B, C, D, E give the order away.',
+     found:'The trolley drawer slides open. Inside is a pager with an urgent message from Bay 4.',
+     teach:'The ABCDE approach deals with the most immediately life-threatening problems first, and each problem is treated as it is found.'},
+    {type:'choose',title:'Bay 4',
+     scene:'Mr Hassan, aged 72, stood up from his chair and says he feels faint. His pulse is fast at 124 and his blood pressure is low at 88/54. He is pale and sweating.',
+     prompt:'What is the best first action?',answer:'',
+     options:['Help him to lie down safely and call urgently for senior help','Encourage him to walk around to improve his circulation','Offer a cup of tea and check on him again in an hour','Record the readings and carry on with the medication round'],correct:0,steps:'',pairs:'',
+     hint:'His observations show his body is struggling. Think safety first, then help.',
+     found:'Mr Hassan is safe and a doctor is on the way. A sealed envelope marked SBAR is on his locker.',
+     teach:'A patient who is deteriorating needs immediate help and escalation. Making them safe comes first, and routine tasks must not delay an urgent call.'},
+    {type:'match',title:'Nurses\' station',
+     scene:'You must hand Mr Hassan over to the doctor on the phone. An SBAR template is pinned to the wall, but the descriptions have fallen off the board.',
+     prompt:'Match each part of SBAR to what you say.',answer:'',options:['','','',''],correct:0,steps:'',
+     pairs:'Situation | What is happening right now\nBackground | Relevant history and what has been done so far\nAssessment | What you think the problem is, with the latest observations\nRecommendation | What you need and by when',
+     hint:'Recommendation is your request: what do you want the doctor to do?',
+     found:'The phone line clears and the doctor confirms they are coming. A final panel lights up at the ward exit.',
+     teach:'A structured handover such as SBAR keeps communication short, clear and complete, so the right person can act quickly.'},
+    {type:'code',title:'Ward exit',
+     scene:'The last lock needs the pump rate for a patient who needs intravenous fluids. The prescription says 1000 mL over 8 hours, given using an infusion pump.',
+     prompt:'What rate should you set on the pump, in mL per hour?',answer:'125',options:['','','',''],correct:0,steps:'',pairs:'',
+     hint:'Divide the total volume by the number of hours.',
+     found:'The doors unlock. The ward is safe and ready for handover.',
+     teach:'An infusion pump delivers exactly what is entered, so check the prescription, calculate the rate and have it independently checked.'}
+  ]
+};
+var ROOM_PROMPT='Write an escape room for [course and level] about [topic]. Use exactly this format, one item per line, with no extra text. Give 5 puzzles. Use a mix of the four puzzle types: code (the answer is a number), choose (multiple choice), order (steps in the correct order) and match (pairs).\n\nROOM: Title of the escape room\nSTORY: 2 to 3 sentences setting the scene.\nMINUTES: 20\n\nPUZZLE: code\nTITLE: Name of the room\nSCENE: What the team sees in this room.\nPROMPT: The question to answer.\nANSWER: 15\nHINT: A nudge without giving the answer.\nFOUND: What the team finds when it unlocks.\nTEACH: The key teaching point.\n\nPUZZLE: choose\nTITLE: ...\nSCENE: ...\nPROMPT: ...\nOPTION: A wrong answer\nOPTION: * The correct answer\nOPTION: Another wrong answer\nHINT: ...\nFOUND: ...\nTEACH: ...\n\nPUZZLE: order\nTITLE: ...\nSCENE: ...\nPROMPT: ...\nSTEP: First step\nSTEP: Second step\nSTEP: Third step\nHINT: ...\nFOUND: ...\nTEACH: ...\n\nPUZZLE: match\nTITLE: ...\nSCENE: ...\nPROMPT: ...\nPAIR: Term | Matching description\nPAIR: Term | Matching description\nHINT: ...\nFOUND: ...\nTEACH: ...';
+
+/* ---------- helpers ---------- */
+function blankPuzzle(type){return {type:type||'code',title:'',scene:'',prompt:'',answer:'',options:['','','',''],correct:0,steps:'',pairs:'',hint:'',found:'',teach:''}}
+function normPuzzle(p){
+  var b=blankPuzzle(p&&p.type);
+  for(var k in b){if(p&&p[k]!=null)b[k]=p[k]}
+  if(!Array.isArray(b.options))b.options=['','','',''];
+  while(b.options.length<4)b.options.push('');
+  return b;
+}
+function lines(s){return String(s||'').split('\n').map(function(l){return l.trim()}).filter(Boolean)}
+function pairList(p){
+  return lines(p.pairs).map(function(l){var k=l.indexOf('|');return k>0?[l.slice(0,k).trim(),l.slice(k+1).trim()]:null}).filter(function(x){return x&&x[0]&&x[1]}).slice(0,6);
+}
+function problem(p){
+  if(p.type==='code'){var a=String(p.answer).trim();return /^-?(\d+\.?\d*|\.\d+)$/.test(a)?'':'Needs a numeric answer, such as 15 or 7.5'}
+  if(p.type==='choose'){
+    var o=p.options.map(function(t){return t.trim()});
+    if(o.filter(Boolean).length<2)return 'Needs at least two options';
+    if(!o[p.correct])return 'Mark a filled option as correct';return '';
+  }
+  if(p.type==='order')return lines(p.steps).length>=2?'':'Needs at least two steps';
+  if(p.type==='match')return pairList(p).length>=2?'':'Needs at least two pairs, written as term | match';
+  return 'Unknown puzzle type';
+}
+function puzzles(){return R.puzzles.filter(function(p){return !problem(p)})}
+function fmt(sec){sec=Math.max(0,Math.ceil(sec));var m=Math.floor(sec/60),s=sec%60;return (m<10?'0':'')+m+':'+(s<10?'0':'')+s}
+var TYPES={code:'Code lock',choose:'Multiple choice',order:'Put in order',match:'Match pairs'};
+
+/* ---------- play engine ---------- */
+var eg=null,tid=null;
+function stopTimer(){clearInterval(tid);tid=null}
+function newGame(){
+  stopTimer();
+  var P=puzzles();
+  eg={phase:'intro',P:P,pi:0,solved:P.map(function(){return false}),hints:P.map(function(){return false}),
+      total:Math.max(1,(+R.minutes||20))*60,left:Math.max(1,(+R.minutes||20))*60,wrong:0,hintsUsed:0,
+      flash:'',flashUntil:0,shake:false,ps:null};
+}
+function startPuzzle(){
+  var p=eg.P[eg.pi],ps={};
+  if(p.type==='code')ps.val='';
+  if(p.type==='choose')ps.bad=[];
+  if(p.type==='order'){
+    var steps=lines(p.steps).slice(0,8).map(function(t,i){return {t:t,i:i}}),items=shuffle(steps),tries=0;
+    while(tries++<6&&items.every(function(x,k){return x.i===k}))items=shuffle(steps);
+    ps.items=items;ps.next=0;ps.n=steps.length;
+  }
+  if(p.type==='match'){
+    var pr=pairList(p);
+    ps.L=pr.map(function(x,i){return {t:x[0],i:i}});ps.Rr=shuffle(pr.map(function(x,i){return {t:x[1],i:i}}));
+    ps.done={};ps.sel=null;ps.n=pr.length;
+  }
+  eg.ps=ps;
+}
+function startTimer(){
+  stopTimer();var last=performance.now();
+  tid=setInterval(function(){
+    var now=performance.now(),dt=(now-last)/1000;last=now;
+    if(!eg||eg.phase!=='play')return;
+    eg.left=Math.max(0,eg.left-dt);
+    updateClock();
+    if(eg.flash&&Date.now()>eg.flashUntil){eg.flash='';var pe=document.querySelector('.pen');if(pe)pe.textContent=''}
+    if(eg.left<=0){eg.phase='lose';stopTimer();renderMain()}
+  },250);
+}
+function updateClock(){
+  var low=eg.left<=60;
+  document.querySelectorAll('.tval').forEach(function(e){e.textContent=fmt(eg.left)});
+  document.querySelectorAll('.e-timer').forEach(function(e){e.classList.toggle('low',low)});
+  document.querySelectorAll('.fuse').forEach(function(e){e.classList.toggle('low',low)});
+  document.querySelectorAll('.ff').forEach(function(e){e.style.width=(eg.left/eg.total*100)+'%'});
+}
+function penalise(sec){
+  eg.left=Math.max(0,eg.left-sec);eg.wrong++;eg.shake=true;
+  eg.flash='−'+sec+' s';eg.flashUntil=Date.now()+1800;
+  if(eg.left<=0){eg.phase='lose';stopTimer()}
+  renderMain();
+}
+function solve(){
+  eg.solved[eg.pi]=true;eg.phase='solved';eg.ps=null;renderMain();
+}
+function next(){
+  if(eg.pi+1>=eg.P.length){eg.phase='win';stopTimer();renderMain();return}
+  eg.pi++;startPuzzle();eg.phase='play';renderMain();
+}
+function begin(){
+  if(!eg.P.length)return;
+  eg.pi=0;startPuzzle();eg.phase='play';startTimer();renderMain();
+}
+
+function doorsHTML(){
+  return '<div class="doors">'+eg.P.map(function(p,i){
+    var st=eg.solved[i]?'solved':((eg.phase==='play'||eg.phase==='solved')&&i===eg.pi?'now':'');
+    var ds=eg.solved[i]?'OPEN':(st==='now'?'NOW':'LOCKED');
+    return '<div class="door '+st+'"><span class="dn">'+(i+1)+' · '+ds+'</span><span class="dt">'+esc(p.title||'Room '+(i+1))+'</span></div>';
+  }).join('')+'</div>';
+}
+function headHTML(){
+  return '<div class="e-head"><div><p class="e-eyebrow">Escape room</p><h2 class="e-title">'+esc(R.title)+'</h2></div>'
+    +'<div class="e-timer'+(eg.left<=60?' low':'')+'"><span class="pen">'+esc(Date.now()<eg.flashUntil?eg.flash:'')+'</span><span class="tl">TIME LEFT</span><span class="tval">'+fmt(eg.left)+'</span></div></div>'
+    +doorsHTML();
+}
+function fuseHTML(){return '<div class="fuse'+(eg.left<=60?' low':'')+'"><div class="ff" style="width:'+(eg.left/eg.total*100)+'%"></div></div>'}
+function logHTML(){
+  var items=eg.P.map(function(p,i){return eg.solved[i]?'<li><p class="lt">'+esc(p.title||'Room '+(i+1))+'</p><p class="lf">'+esc(p.found)+'</p></li>':''}).join('');
+  return '<div class="z z-log"><p class="lab">Found so far</p>'+(items?'<ul class="log">'+items+'</ul>':'<p class="log none">Nothing yet.</p>')+'</div>';
+}
+function storyHTML(p){
+  var len=p.scene.length,cls=len>330?' s':(len>230?' m':'');
+  var hint='';
+  if(eg.phase==='play'&&p.hint){
+    hint=eg.hints[eg.pi]?'<div class="hintbox"><b>HINT</b>'+esc(p.hint)+'</div>'
+      :'<div><button class="sbtn alt" data-act="hint">Use a hint (−'+(+R.hintPenalty||0)+' s)</button></div>';
+  }
+  return '<div class="z z-story"><p class="lab">The room</p><p class="e-text'+cls+'">'+esc(p.scene)+'</p>'+hint+'</div>';
+}
+function puzzleBody(p){
+  var ps=eg.ps,h='<p class="e-prompt">'+esc(p.prompt)+'</p>';
+  if(p.type==='code'){
+    var keys=['1','2','3','4','5','6','7','8','9','.','0','⌫'];
+    h+='<div class="code"><div class="left"><div class="cd"><span>'+esc(ps.val)+'</span><span class="cur"></span></div><div class="s-row"><button class="sbtn" data-act="unlock">Unlock</button></div></div>'
+      +'<div class="keypad">'+keys.map(function(k){return '<button class="kp" data-act="ckey" data-k="'+(k==='⌫'?'del':k)+'" aria-label="'+(k==='⌫'?'Delete':k)+'">'+k+'</button>'}).join('')+'</div></div>';
+  }else if(p.type==='choose'){
+    var opts=[];p.options.forEach(function(t,i){if(t.trim())opts.push({t:t.trim(),i:i})});
+    h+='<div class="chs">'+opts.map(function(o,n){
+      var bad=ps.bad.indexOf(o.i)>-1;
+      return '<button class="ch'+(bad?' no':'')+'" data-act="cpick" data-i="'+o.i+'" '+(bad?'disabled':'')+'><span class="k">'+'ABCD'[n]+'</span><span>'+esc(o.t)+'</span></button>';
+    }).join('')+'</div>';
+  }else if(p.type==='order'){
+    var placedN=ps.next,all=lines(p.steps).slice(0,8),pool=ps.items.filter(function(x){return x.i>=ps.next||false});
+    // items already placed are those with index < next
+    var remaining=ps.items.filter(function(x){return x.i>=ps.next});
+    h+='<div class="ord"><div class="pool">'+remaining.map(function(x){return '<button class="chip" data-act="ochip" data-i="'+x.i+'">'+esc(x.t)+'</button>'}).join('')+'</div>'
+      +'<ol class="placed">'+all.slice(0,placedN).map(function(t){return '<li>'+esc(t)+'</li>'}).join('')
+      +(placedN<all.length?'<li class="slot" style="list-style:none;counter-increment:none;display:block;border-style:dashed;background:transparent">Next step…</li>':'')+'</ol></div>';
+  }else if(p.type==='match'){
+    h+='<div class="mt"><div class="col">'+ps.L.map(function(x){
+      var d=ps.done[x.i],s=ps.sel&&ps.sel.s==='L'&&ps.sel.i===x.i;
+      return '<button class="mb'+(d?' done':'')+(s?' sel':'')+'" data-act="mpick" data-s="L" data-i="'+x.i+'" '+(d?'disabled':'')+'>'+esc(x.t)+'</button>';
+    }).join('')+'</div><div class="col">'+ps.Rr.map(function(x){
+      var d=ps.done[x.i],s=ps.sel&&ps.sel.s==='R'&&ps.sel.i===x.i;
+      return '<button class="mb'+(d?' done':'')+(s?' sel':'')+'" data-act="mpick" data-s="R" data-i="'+x.i+'" '+(d?'disabled':'')+'>'+esc(x.t)+'</button>';
+    }).join('')+'</div></div>';
+  }
+  return h;
+}
+function stageHTML(){
+  var g=eg;
+  if(!g.P.length)return '<div class="emptyst"><p>This escape room has no complete puzzles yet.</p><p style="font-size:44px;color:var(--st-mut)">Choose Edit and fix or add a puzzle.</p></div>';
+  var p=g.P[g.pi];
+  var html=headHTML();
+  if(g.phase==='intro'){
+    html+='<div class="center"><div style="flex:3;display:flex;flex-direction:column;gap:30px"><p class="lab">Your mission</p><p class="e-text" style="font-size:50px">'+esc(R.story)+'</p>'
+      +'<div class="s-row"><button class="sbtn" data-act="begin">Start the clock</button></div></div>'
+      +'<div style="flex:2;display:flex;flex-direction:column;gap:20px"><p class="lab">The rules</p><ul class="points"><li>'+g.P.length+' locked rooms, '+Math.round(g.total/60)+' minutes.</li><li>Every wrong answer costs '+(+R.wrongPenalty||0)+' seconds.</li><li>A hint costs '+(+R.hintPenalty||0)+' seconds.</li><li>The clock stops while you read what you found.</li></ul></div></div>';
+  }else if(g.phase==='win'||g.phase==='lose'){
+    var done=g.solved.filter(Boolean).length;
+    html+='<div class="center"><div style="flex:3;display:flex;flex-direction:column;gap:28px">'
+      +'<p class="big '+(g.phase==='win'?'win':'lose')+'">'+(g.phase==='win'?'You escaped!':'Time is up')+'</p>'
+      +'<p class="e-text" style="font-size:46px">'+esc(g.phase==='win'?R.winText:R.loseText)+'</p>'
+      +'<div class="stats"><span>Rooms <b>'+done+' of '+g.P.length+'</b></span>'+(g.phase==='win'?'<span>Time left <b>'+fmt(g.left)+'</b></span>':'')+'<span>Wrong answers <b>'+g.wrong+'</b></span><span>Hints <b>'+g.hintsUsed+'</b></span></div>'
+      +'<div class="s-row"><button class="sbtn" data-act="again">Play again</button></div></div>'
+      +'<div style="flex:3;display:flex;flex-direction:column;gap:18px"><p class="lab">What to remember</p><ul class="points">'
+      +g.P.map(function(q){return '<li><b>'+esc(q.title)+'</b>'+esc(q.teach)+'</li>'}).join('')+'</ul></div></div>';
+  }else{
+    var puz;
+    if(g.phase==='solved'){
+      puz='<div class="z z-puz"><div class="okbox"><p class="ok-h">Unlocked</p><p class="ok-f">'+esc(p.found)+'</p>'
+        +(p.teach?'<div class="teach"><b>WHY IT MATTERS</b>'+esc(p.teach)+'</div>':'')
+        +'<div class="s-row"><button class="sbtn" data-act="next">'+(g.pi+1>=g.P.length?'Escape!':'Open the next door')+'</button></div></div></div>';
+    }else{
+      puz='<div class="z z-puz'+(g.shake?' shake':'')+'"><p class="lab">The lock · '+esc(TYPES[p.type])+'</p>'+puzzleBody(p)+'</div>';
+    }
+    html+='<div class="e-main">'+storyHTML(p)+puz+logHTML()+'</div>';
+  }
+  return html+fuseHTML();
+}
+
+/* ---------- edit ---------- */
+function roomEdit(){
+  var html='<section class="panel"><h2>Edit: '+esc(R.title||'Untitled escape room')+'</h2><div class="edit">'
+    +'<label class="field"><span>Escape room title</span><input type="text" id="e-title" data-f="title" value="'+esc(R.title)+'"></label>'
+    +'<label class="field"><span>Story at the start</span><textarea id="e-story" rows="3" data-f="story">'+esc(R.story)+'</textarea></label>'
+    +'<div class="grid3"><label class="field"><span>Minutes on the clock</span><input type="number" id="e-min" min="1" max="90" data-f="minutes" value="'+esc(R.minutes)+'"></label>'
+    +'<label class="field"><span>Seconds lost for a wrong answer</span><input type="number" id="e-wp" min="0" max="120" data-f="wrongPenalty" value="'+esc(R.wrongPenalty)+'"></label>'
+    +'<label class="field"><span>Seconds lost for a hint</span><input type="number" id="e-hp" min="0" max="300" data-f="hintPenalty" value="'+esc(R.hintPenalty)+'"></label></div>'
+    +'<div class="grid2"><label class="field"><span>Message when the team escapes</span><textarea id="e-win" rows="2" data-f="winText">'+esc(R.winText)+'</textarea></label>'
+    +'<label class="field"><span>Message when time runs out</span><textarea id="e-lose" rows="2" data-f="loseText">'+esc(R.loseText)+'</textarea></label></div>'
+    +'<h3>Puzzles</h3>';
+  R.puzzles.forEach(function(p,i){
+    var pr=problem(p);
+    html+='<div class="qcard"><div class="qcard-h"><div class="l"><span class="mono">Door '+(i+1)+'</span><span class="tag">'+esc(TYPES[p.type])+'</span>'+(pr?'<span class="tag warn">'+esc(pr)+' · skipped until fixed</span>':'')+'</div>'
+      +'<div class="actions"><button class="btn ghost" data-act="mvup" data-i="'+i+'" '+(i===0?'disabled':'')+'>Move up</button><button class="btn ghost" data-act="mvdown" data-i="'+i+'" '+(i===R.puzzles.length-1?'disabled':'')+'>Move down</button><button class="btn ghost" data-act="delp" data-i="'+i+'">Remove</button></div></div>'
+      +'<div class="grid2"><label class="field"><span>Puzzle type</span><select id="e-ty'+i+'" data-f="ptype" data-i="'+i+'" data-r="1">'
+      +Object.keys(TYPES).map(function(k){return '<option value="'+k+'" '+(p.type===k?'selected':'')+'>'+TYPES[k]+'</option>'}).join('')+'</select></label>'
+      +'<label class="field"><span>Room name</span><input type="text" id="e-pt'+i+'" data-f="ptitle" data-i="'+i+'" data-r="1" value="'+esc(p.title)+'"></label></div>'
+      +'<label class="field"><span>What the team sees in this room</span><textarea id="e-sc'+i+'" rows="3" data-f="pscene" data-i="'+i+'">'+esc(p.scene)+'</textarea></label>'
+      +'<label class="field"><span>The question or task</span><input type="text" id="e-pr'+i+'" data-f="pprompt" data-i="'+i+'" value="'+esc(p.prompt)+'"></label>';
+    if(p.type==='code'){
+      html+='<label class="field"><span>Answer (a number, such as 15 or 7.5)</span><input type="text" id="e-an'+i+'" data-f="panswer" data-i="'+i+'" value="'+esc(p.answer)+'"></label>';
+    }else if(p.type==='choose'){
+      html+='<div class="field"><span>Options (select the circle beside the correct one)</span></div><div class="opts">'+[0,1,2,3].map(function(j){
+        return '<div class="opt"><input type="radio" name="co'+i+'" id="e-cr'+i+'-'+j+'" data-f="pcorrect" data-i="'+i+'" data-j="'+j+'" aria-label="Mark option '+'ABCD'[j]+' as correct" '+(p.correct===j?'checked':'')+'>'
+          +'<input type="text" id="e-co'+i+'-'+j+'" data-f="poption" data-i="'+i+'" data-j="'+j+'" placeholder="Option '+'ABCD'[j]+'" value="'+esc(p.options[j])+'"></div>';
+      }).join('')+'</div>';
+    }else if(p.type==='order'){
+      html+='<label class="field"><span>Steps in the correct order, one per line (up to 8). The room shuffles them.</span><textarea id="e-st'+i+'" rows="5" data-f="psteps" data-i="'+i+'">'+esc(p.steps)+'</textarea></label>';
+    }else if(p.type==='match'){
+      html+='<label class="field"><span>Pairs, one per line, as term | match (up to 6). The room shuffles them.</span><textarea id="e-pa'+i+'" rows="5" data-f="ppairs" data-i="'+i+'">'+esc(p.pairs)+'</textarea></label>';
+    }
+    html+='<label class="field"><span>Hint (optional)</span><input type="text" id="e-hi'+i+'" data-f="phint" data-i="'+i+'" value="'+esc(p.hint)+'"></label>'
+      +'<label class="field"><span>What the team finds when it unlocks the door</span><input type="text" id="e-fo'+i+'" data-f="pfound" data-i="'+i+'" value="'+esc(p.found)+'"></label>'
+      +'<label class="field"><span>Teaching point shown after the door opens</span><textarea id="e-te'+i+'" rows="2" data-f="pteach" data-i="'+i+'">'+esc(p.teach)+'</textarea></label></div>';
+  });
+  html+='<div class="actions"><button class="btn secondary" data-act="addp">Add a puzzle</button></div>'
+    +'<details class="paste"><summary>Paste a whole escape room from text or AI</summary><div class="inner">'
+    +'<p class="hint">Best done on a laptop. Ask any AI tool with this prompt, paste its answer below, then use Share link in the bar above to carry the finished room to the Igloo.</p>'
+    +'<pre class="prompt" id="rprompt">'+esc(ROOM_PROMPT)+'</pre>'
+    +'<div class="actions"><button class="btn secondary" data-act="copy" data-src="rprompt">Copy prompt</button></div>'
+    +'<label class="field"><span>Pasted escape room</span><textarea id="rpaste" rows="10"></textarea></label>'
+    +'<div class="actions"><button class="btn" data-act="rparse">Use this escape room</button><span class="msg" id="rpmsg" role="status"></span></div>'
+    +'</div></details></div></section>';
+  return html;
+}
+function parseRoom(text){
+  var out={title:'',story:'',minutes:0,puzzles:[]},cur=null;
+  text.split('\n').forEach(function(raw){
+    var l=raw.trim();if(!l)return;
+    var m=l.match(/^([A-Za-z]+)\s*:\s*(.*)$/);if(!m)return;
+    var k=m[1].toUpperCase(),v=m[2].trim();
+    if(k==='ROOM'){out.title=v;return}
+    if(k==='STORY'&&!cur){out.story=v;return}
+    if(k==='MINUTES'&&!cur){out.minutes=parseInt(v,10)||0;return}
+    if(k==='PUZZLE'){var t=v.toLowerCase();cur=blankPuzzle(TYPES[t]?t:'choose');out.puzzles.push(cur);return}
+    if(!cur)return;
+    if(k==='TITLE')cur.title=v;
+    else if(k==='SCENE')cur.scene=v;
+    else if(k==='PROMPT')cur.prompt=v;
+    else if(k==='ANSWER')cur.answer=v;
+    else if(k==='HINT')cur.hint=v;
+    else if(k==='FOUND')cur.found=v;
+    else if(k==='TEACH')cur.teach=v;
+    else if(k==='OPTION'){
+      var n=cur.options.filter(Boolean).length;if(n>=4)return;
+      var star=/^\*\s*/.test(v);v=v.replace(/^\*\s*/,'');
+      cur.options[n]=v;if(star)cur.correct=n;
+    }
+    else if(k==='STEP')cur.steps+=(cur.steps?'\n':'')+v;
+    else if(k==='PAIR')cur.pairs+=(cur.pairs?'\n':'')+v;
+  });
+  return out;
+}
+
+/* ---------- share link ---------- */
+function toB64(bytes){var s='';for(var i=0;i<bytes.length;i+=8192)s+=String.fromCharCode.apply(null,bytes.subarray(i,i+8192));return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'')}
+function fromB64(str){str=str.replace(/-/g,'+').replace(/_/g,'/');while(str.length%4)str+='=';var bin=atob(str),b=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)b[i]=bin.charCodeAt(i);return b}
+async function pack(){
+  var bytes=new TextEncoder().encode(JSON.stringify(R));
+  if(window.CompressionStream){
+    var cs=new CompressionStream('gzip'),w=cs.writable.getWriter();w.write(bytes);w.close();
+    return 'z'+toB64(new Uint8Array(await new Response(cs.readable).arrayBuffer()));
+  }
+  return 'p'+toB64(bytes);
+}
+async function unpack(s){
+  var bytes=fromB64(s.slice(1));
+  if(s[0]==='z'){
+    var ds=new DecompressionStream('gzip'),w=ds.writable.getWriter();w.write(bytes);w.close();
+    bytes=new Uint8Array(await new Response(ds.readable).arrayBuffer());
+  }
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+function loadRoom(o){
+  R={title:String(o.title||''),story:String(o.story||''),minutes:+o.minutes||20,wrongPenalty:+o.wrongPenalty||0,hintPenalty:+o.hintPenalty||0,
+     winText:String(o.winText||''),loseText:String(o.loseText||''),puzzles:(o.puzzles||[]).map(normPuzzle)};
+}
+
+/* ---------- shell ---------- */
+var ro=null;
+function fit(){
+  var vp=$('#vp'),st=$('#stage');if(!vp||!st)return;
+  var w=vp.clientWidth,h=vp.clientHeight;if(!w||!h)return;
+  var s=Math.min(w/8000,h/1080);
+  st.style.transform='translate('+((w-8000*s)/2)+'px,'+((h-1080*s)/2)+'px) scale('+s+')';
+}
+function renderChrome(){
+  var play=mode==='play';
+  $('#bar').innerHTML='<div class="seg" role="group" aria-label="Mode">'
+    +'<button data-act="mode" data-v="play" aria-pressed="'+play+'">Play</button>'
+    +'<button data-act="mode" data-v="edit" aria-pressed="'+!play+'">Edit</button></div>'
+    +'<div class="right">'+(play?'<span class="keys-hint">Keys: type digits for a code lock, A to D for multiple choice.</span>'
+      +'<button class="btn secondary" data-act="real">'+(real?'Fit to screen':'Real size (8000 px)')+'</button>':'')
+    +'<button class="btn secondary" data-act="share">Share link</button>'
+    +(play?'<button class="btn" data-act="fs">Fullscreen</button>':'')+'<span class="msg small" id="fsmsg" role="status"></span></div>';
+}
+function renderMain(){
+  var host=$('#host');
+  if(mode!=='play'){stopTimer();host.dataset.kind='edit';host.innerHTML=roomEdit();return}
+  if(host.dataset.kind!=='play'){
+    host.dataset.kind='play';
+    host.innerHTML='<div class="scroller'+(real?' real':'')+'" id="scroller"><div class="viewport" id="vp"><div class="stage" id="stage"></div></div></div>';
+    if(ro)ro.disconnect();
+    if(window.ResizeObserver){ro=new ResizeObserver(fit);ro.observe($('#vp'))}
+  }
+  $('#stage').innerHTML=stageHTML();
+  eg.shake=false;
+  fit();
+}
+function ckey(k){
+  if(!eg||eg.phase!=='play'||eg.P[eg.pi].type!=='code')return;
+  var v=eg.ps.val;
+  if(k==='del')v=v.slice(0,-1);
+  else if(k==='.'){if(v.indexOf('.')<0&&v.length<8)v+='.'}
+  else if(v.length<8)v+=k;
+  eg.ps.val=v;renderMain();
+}
+var actions={
+  mode:function(b){mode=b.dataset.v;newGame();renderChrome();renderMain()},
+  real:function(){real=!real;var sc=$('#scroller');if(sc)sc.classList.toggle('real',real);renderChrome();fit()},
+  fs:function(){
+    var vp=$('#vp'),msg=$('#fsmsg');
+    function fail(){if(msg)msg.textContent='Fullscreen is blocked here. Press F11 in your browser instead.'}
+    try{var fn=vp.requestFullscreen||vp.webkitRequestFullscreen;if(!fn){fail();return}var p=fn.call(vp);if(p&&p.catch)p.catch(fail)}catch(e){fail()}
+  },
+  share:async function(){
+    var box=$('#share'),msg=$('#fsmsg');
+    try{
+      var packed=await pack(),url=location.href.split('#')[0]+'#r='+packed;
+      box.innerHTML='<div class="sharebox"><strong>Share link</strong><p class="hint">Open this link on any device, such as the Igloo tablet, to load this exact escape room. It works from the hosted copy of this page.'+(url.length>6000?' This room is long, so some systems may cut the link short.':'')+'</p>'
+        +'<input type="text" id="shareurl" readonly value="'+esc(url)+'" aria-label="Share link">'
+        +'<div class="actions"><button class="btn" data-act="copyurl">Copy link</button><button class="btn ghost" data-act="closeshare">Close</button><span class="msg" id="smsg" role="status"></span></div></div>';
+    }catch(e){if(msg)msg.textContent='Could not make a link in this browser.'}
+  },
+  closeshare:function(){$('#share').innerHTML=''},
+  copyurl:function(){
+    var inp=$('#shareurl'),m=$('#smsg');
+    function fb(){inp.focus();inp.select();if(m)m.textContent='Selected. Now copy it.'}
+    try{navigator.clipboard.writeText(inp.value).then(function(){if(m)m.textContent='Copied'},fb)}catch(e){fb()}
+  },
+  begin:function(){begin()},
+  again:function(){newGame();renderMain()},
+  hint:function(){
+    if(eg.phase!=='play'||eg.hints[eg.pi])return;
+    eg.hints[eg.pi]=true;eg.hintsUsed++;
+    var pen=+R.hintPenalty||0;eg.left=Math.max(0,eg.left-pen);
+    if(pen){eg.flash='−'+pen+' s';eg.flashUntil=Date.now()+1800}
+    if(eg.left<=0){eg.phase='lose';stopTimer()}
+    renderMain();
+  },
+  next:function(){next()},
+  ckey:function(b){ckey(b.dataset.k)},
+  unlock:function(){
+    if(eg.phase!=='play')return;
+    var p=eg.P[eg.pi],v=parseFloat(eg.ps.val);
+    if(!isNaN(v)&&Math.abs(v-parseFloat(p.answer))<1e-9)solve();
+    else{eg.ps.val='';penalise(+R.wrongPenalty||0)}
+  },
+  cpick:function(b){
+    if(eg.phase!=='play')return;
+    var p=eg.P[eg.pi],i=+b.dataset.i;
+    if(i===p.correct)solve();
+    else{eg.ps.bad.push(i);penalise(+R.wrongPenalty||0)}
+  },
+  ochip:function(b){
+    if(eg.phase!=='play')return;
+    var i=+b.dataset.i;
+    if(i===eg.ps.next){eg.ps.next++;if(eg.ps.next>=eg.ps.n)solve();else renderMain()}
+    else penalise(+R.wrongPenalty||0);
+  },
+  mpick:function(b){
+    if(eg.phase!=='play')return;
+    var ps=eg.ps,s=b.dataset.s,i=+b.dataset.i;
+    if(!ps.sel||ps.sel.s===s){ps.sel={s:s,i:i};renderMain();return}
+    if(ps.sel.i===i){
+      ps.done[i]=true;ps.sel=null;
+      if(Object.keys(ps.done).length>=ps.n)solve();else renderMain();
+    }else{ps.sel=null;penalise(+R.wrongPenalty||0)}
+  },
+  addp:function(){R.puzzles.push(blankPuzzle('code'));renderMain()},
+  delp:function(b){R.puzzles.splice(+b.dataset.i,1);renderMain()},
+  mvup:function(b){var i=+b.dataset.i;if(i>0){var t=R.puzzles[i];R.puzzles[i]=R.puzzles[i-1];R.puzzles[i-1]=t;renderMain()}},
+  mvdown:function(b){var i=+b.dataset.i;if(i<R.puzzles.length-1){var t=R.puzzles[i];R.puzzles[i]=R.puzzles[i+1];R.puzzles[i+1]=t;renderMain()}},
+  rparse:function(){
+    var r=parseRoom(document.getElementById('rpaste').value),msg=document.getElementById('rpmsg');
+    if(!r.puzzles.length){msg.textContent='No puzzles found. Start each puzzle with PUZZLE: and a type.';return}
+    if(r.title)R.title=r.title;if(r.story)R.story=r.story;if(r.minutes)R.minutes=r.minutes;
+    R.puzzles=r.puzzles;renderMain();
+    var d=document.querySelector('details.paste');if(d)d.open=true;
+    var bad=R.puzzles.filter(problem).length,m2=document.getElementById('rpmsg');
+    if(m2)m2.textContent=r.puzzles.length+' puzzles added above.'+(bad?' '+bad+' need fixing and will be skipped until you do.':'');
+  },
+  copy:function(b){
+    var pre=document.getElementById(b.dataset.src),old=b.textContent;
+    function fallback(){var r=document.createRange();r.selectNodeContents(pre);var s=window.getSelection();s.removeAllRanges();s.addRange(r);b.textContent='Selected, now copy'}
+    try{navigator.clipboard.writeText(pre.textContent).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent=old},1500)},fallback)}catch(e){fallback()}
+  }
+};
+document.addEventListener('click',function(e){
+  var b=e.target.closest('[data-act]');
+  if(!b||b.disabled)return;
+  var fn=actions[b.dataset.act];if(fn)fn(b);
+});
+function setField(t){
+  var f=t.dataset.f,i=+t.dataset.i,j=+t.dataset.j,p=R.puzzles[i];
+  switch(f){
+    case 'title':R.title=t.value;return;
+    case 'story':R.story=t.value;return;
+    case 'minutes':R.minutes=t.value;return;
+    case 'wrongPenalty':R.wrongPenalty=t.value;return;
+    case 'hintPenalty':R.hintPenalty=t.value;return;
+    case 'winText':R.winText=t.value;return;
+    case 'loseText':R.loseText=t.value;return;
+  }
+  if(!p)return;
+  switch(f){
+    case 'ptype':p.type=t.value;break;
+    case 'ptitle':p.title=t.value;break;
+    case 'pscene':p.scene=t.value;break;
+    case 'pprompt':p.prompt=t.value;break;
+    case 'panswer':p.answer=t.value;break;
+    case 'poption':p.options[j]=t.value;break;
+    case 'pcorrect':p.correct=j;break;
+    case 'psteps':p.steps=t.value;break;
+    case 'ppairs':p.pairs=t.value;break;
+    case 'phint':p.hint=t.value;break;
+    case 'pfound':p.found=t.value;break;
+    case 'pteach':p.teach=t.value;break;
+  }
+}
+document.addEventListener('input',function(e){var t=e.target;if(t.dataset&&t.dataset.f)setField(t)});
+document.addEventListener('change',function(e){var t=e.target;if(t.dataset&&t.dataset.f&&t.dataset.r){setField(t);renderMain()}});
+document.addEventListener('keydown',function(e){
+  if(mode!=='play'||!eg||e.ctrlKey||e.metaKey||e.altKey)return;
+  var a=document.activeElement;
+  if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;
+  var k=e.key;
+  if(eg.phase==='intro'&&k==='Enter'){e.preventDefault();begin();return}
+  if(eg.phase==='solved'&&(k==='Enter'||k===' ')){e.preventDefault();next();return}
+  if(eg.phase!=='play')return;
+  var p=eg.P[eg.pi];
+  if(p.type==='code'){
+    if(/^[0-9.]$/.test(k)){e.preventDefault();ckey(k)}
+    else if(k==='Backspace'){e.preventDefault();ckey('del')}
+    else if(k==='Enter'){e.preventDefault();actions.unlock()}
+  }else if(p.type==='choose'){
+    var idx='abcd'.indexOf(k.toLowerCase());
+    if(k.length===1&&idx>-1){
+      var opts=[];p.options.forEach(function(t,i){if(t.trim())opts.push(i)});
+      if(opts[idx]!==undefined&&eg.ps.bad.indexOf(opts[idx])<0){e.preventDefault();actions.cpick({dataset:{i:String(opts[idx])}})}
+    }
+  }
+});
+window.addEventListener('resize',fit);
+document.addEventListener('fullscreenchange',fit);
+document.addEventListener('webkitfullscreenchange',fit);
+
+async function boot(){
+  var h=location.hash,loaded=false;
+  if(h.indexOf('#r=')===0){
+    try{var o=await unpack(h.slice(3));if(o&&Array.isArray(o.puzzles)){loadRoom(o);loaded=true}}catch(e){}
+    if(!loaded)$('#banner').innerHTML='<div class="banner">That share link could not be read, so the sample escape room is shown instead.</div>';
+  }
+  if(loaded)$('#banner').innerHTML='<div class="banner">Loaded from a shared link. Choose Edit to change it.</div>';
+  newGame();renderChrome();renderMain();
+}
+boot();
+})();
+</script>
+
+</body>
+</html>
