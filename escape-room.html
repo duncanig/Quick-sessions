@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Igloo Escape Room: a nursing and healthcare escape room template for an 8000 x 1080 display.">
+<meta name="description" content="Igloo Escape Room: an illustrated nursing and healthcare escape room with glowing hotspots, for an 8000 x 1080 display.">
 <style>
 :root{color-scheme:light}
 body{margin:0}
@@ -17,13 +17,14 @@ img{max-width:100%}
 <style>
 /* Layout: teacher chrome and edit forms are normal responsive page UI.
    The play area is a fixed 8000x1080 stage for a cube-shaped room: four walls of 2000 px, corners at 0, 2000, 4000, 6000.
-   All text lives inside a wall with 140 px clear of each corner. Only light, particles and the fuse bar cross corners.
-   Wall 1 mission control, wall 2 the room, wall 3 the lock, wall 4 what was found. The stage keeps its own dark colours in both themes. */
+   The room itself is an illustrated ward drawn across all four walls. The team clicks the glowing object to reach each lock.
+   When a lock opens, two neighbouring walls dim and show the story and the puzzle. All text keeps 150 px clear of each corner;
+   only the illustration, light effects and the fuse bar cross corners. The stage keeps its own dark colours in both themes. */
 :root{
   --bg:#EAF1F6; --surface:#F8FBFD; --surface2:#DDE9F1; --fg:#0F2233; --muted:#4F6577; --line:#BCCEDB;
   --accent:#D9480F; --accent-fg:#FFFFFF; --ice:#1B7DA6;
   --good:#177A4C; --good-bg:#DCF3E7; --bad:#B42323; --bad-bg:#FBE2E2; --warn:#8A5A00;
-  --st-fg:#EAF6F6; --st-mut:#8FB6B8; --st-card:rgba(255,255,255,.07); --st-line:rgba(255,255,255,.2);
+  --st-fg:#EAF6F6; --st-mut:#9CC0C2; --st-card:rgba(255,255,255,.08); --st-line:rgba(255,255,255,.22);
   --st-accent:#FFB547; --st-accent-fg:#2A1A00; --st-ice:#5CE1D0; --st-good:#4ADE9A; --st-bad:#FF8585;
   --font-display:'Unbounded','Trebuchet MS',sans-serif;
   --font-body:'Figtree','Segoe UI',system-ui,sans-serif;
@@ -85,50 +86,32 @@ ul,ol{padding:0;list-style:none}
 .viewport{position:relative;width:100%;aspect-ratio:8000/1080;overflow:hidden;background:#000}
 .scroller.real .viewport{width:8000px;max-width:none}
 .viewport:fullscreen{aspect-ratio:auto;width:100vw;height:100vh}
-.stage{position:absolute;left:0;top:0;width:8000px;height:1080px;transform-origin:0 0;overflow:hidden;color:var(--st-fg);font-family:var(--font-body);user-select:none;-webkit-user-select:none;
-  background:
-   radial-gradient(2600px 700px at 86% 126%,rgba(92,225,208,.17),transparent 70%),
-   radial-gradient(2400px 700px at 4% -16%,rgba(255,181,71,.13),transparent 70%),
-   linear-gradient(180deg,#041119,#0A2530)}
+.stage{position:absolute;left:0;top:0;width:8000px;height:1080px;transform-origin:0 0;overflow:hidden;color:var(--st-fg);font-family:var(--font-body);user-select:none;-webkit-user-select:none;background:#0A2530}
 .stage button{font-family:inherit;color:inherit}
+#art{position:absolute;inset:0;pointer-events:none}
+#art svg{display:block}
 
-/* walls */
-.wall{position:absolute;top:0;width:2000px;height:1010px;padding:50px 150px 0;display:flex;flex-direction:column;gap:22px;overflow:hidden}
+/* walls (text lives here) */
+.wall{position:absolute;top:0;width:2000px;height:1010px;padding:50px 150px 0;display:flex;flex-direction:column;gap:22px;overflow:hidden;background:rgba(3,12,18,.86);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
 .wall::before{content:"";position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(180deg,transparent,rgba(255,255,255,.16),transparent)}
 .wh{display:flex;justify-content:space-between;align-items:center;gap:20px;height:74px;flex:none}
-.lab{font-family:var(--font-mono);font-size:28px;letter-spacing:.22em;text-transform:uppercase;color:var(--st-mut)}
-.tp{position:relative;font-family:var(--font-mono);font-size:64px;line-height:1;font-variant-numeric:tabular-nums}
-.tp.low,.e-timer.low .tval{color:var(--st-bad)}
-.tp.low{animation:blink 1s steps(2) infinite}
+.lab{font-family:var(--font-mono);font-size:28px;letter-spacing:.22em;text-transform:uppercase;color:var(--st-mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.tp{position:relative;font-family:var(--font-mono);font-size:64px;line-height:1;font-variant-numeric:tabular-nums;flex:none}
+.tp.low{color:var(--st-bad);animation:blink 1s steps(2) infinite}
 .pen{position:absolute;right:0;top:-34px;font-family:var(--font-mono);font-size:34px;color:var(--st-bad);white-space:nowrap}
 @keyframes blink{50%{opacity:.55}}
-.e-eyebrow{font-family:var(--font-mono);font-size:28px;letter-spacing:.24em;text-transform:uppercase;color:var(--st-mut)}
-.e-title{font-family:var(--font-display);font-weight:700;font-size:56px;line-height:1.1;text-wrap:balance}
-.e-timer{position:relative;display:flex;flex-direction:column;gap:2px}
-.e-timer .tl{font-family:var(--font-mono);font-size:26px;letter-spacing:.24em;color:var(--st-mut)}
-.e-timer .tval{font-family:var(--font-mono);font-size:140px;line-height:1;font-variant-numeric:tabular-nums}
-.e-timer .pen{right:0;top:0;font-size:44px}
-.dl{display:flex;flex-direction:column;gap:10px;margin-top:6px}
-.dr{display:grid;grid-template-columns:52px minmax(0,1fr) auto;gap:18px;align-items:center;padding:0 24px;height:78px;border-radius:20px;border:3px solid var(--st-line);background:rgba(255,255,255,.05)}
-.dr .dn{font-family:var(--font-mono);font-size:32px;color:var(--st-mut)}
-.dr .dt{font-size:34px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dr .ds{font-family:var(--font-mono);font-size:24px;letter-spacing:.16em;color:var(--st-mut)}
-.dr.solved{border-color:var(--st-good);background:rgba(74,222,154,.12)}
-.dr.solved .dn,.dr.solved .ds{color:var(--st-good)}
-.dr.now{border-color:var(--st-accent);background:rgba(255,181,71,.15);animation:glow 1.6s ease-in-out infinite}
-.dr.now .dn,.dr.now .ds{color:var(--st-accent)}
-@keyframes glow{50%{box-shadow:0 0 0 8px rgba(255,181,71,.22)}}
-.dl.tight{gap:6px}.dl.tight .dr{height:62px}.dl.tight .dt{font-size:30px}
-.wall.w0.tight .e-timer .tval{font-size:100px}.wall.w0.tight .e-title{font-size:46px}
+.hud{position:absolute;top:0;width:2000px;height:140px;padding:34px 150px 0;display:flex;justify-content:space-between;align-items:flex-start;gap:20px;background:linear-gradient(180deg,rgba(2,10,16,.82),rgba(2,10,16,0))}
+.hud .lab{text-shadow:0 2px 10px #000}
+.hud .tp{text-shadow:0 2px 14px #000}
+.fuse{position:absolute;left:0;right:0;top:1034px;height:14px;background:rgba(255,255,255,.1);overflow:hidden}
+.fuse .ff{height:100%;background:linear-gradient(90deg,#5CE1D0,#FFB547)}
+.fuse.low .ff{background:var(--st-bad)}
 
 .e-text{font-size:44px;line-height:1.3}
 .e-text.m{font-size:40px}.e-text.s{font-size:35px}
 .e-text.big2{font-size:48px}
 .hintbox{padding:16px 24px;border-radius:20px;border:3px solid var(--st-accent);background:rgba(255,181,71,.12);font-size:34px;line-height:1.3}
 .hintbox b{font-family:var(--font-mono);font-size:24px;letter-spacing:.18em;display:block;margin-bottom:4px;color:var(--st-accent)}
-.fuse{position:absolute;left:0;right:0;top:1030px;height:14px;background:rgba(255,255,255,.1);overflow:hidden}
-.fuse .ff{height:100%;background:linear-gradient(90deg,#5CE1D0,#FFB547)}
-.fuse.low .ff{background:var(--st-bad)}
 
 .e-prompt{font-size:42px;font-weight:700;line-height:1.2;text-wrap:balance}
 .sbtn{font-size:38px;font-weight:700;padding:16px 36px;border-radius:20px;border:4px solid var(--st-accent);background:var(--st-accent);color:var(--st-accent-fg);flex:none}
@@ -163,6 +146,10 @@ ul,ol{padding:0;list-style:none}
 .placed li::before{content:counter(pl);font-family:var(--font-mono);color:var(--st-good)}
 .placed li.slot{counter-increment:none;background:transparent;border:3px dashed var(--st-line);color:var(--st-mut)}
 .placed li.slot::before{content:none}
+.ord.dense{gap:18px}
+.ord.dense .pool,.ord.dense .placed{gap:8px}
+.ord.dense .chip{font-size:25px;padding:10px 16px}
+.ord.dense .placed li{font-size:24px;padding:8px 14px}
 
 .mt{display:flex;gap:26px}
 .mt .col{display:flex;flex-direction:column;gap:12px;flex:1 1 0;min-width:0}
@@ -177,15 +164,6 @@ ul,ol{padding:0;list-style:none}
 .teach{padding:18px 26px;border-radius:22px;border:3px solid var(--st-ice);background:rgba(92,225,208,.1);font-size:34px;line-height:1.3}
 .teach b{display:block;font-family:var(--font-mono);font-size:24px;letter-spacing:.2em;color:var(--st-ice);margin-bottom:4px}
 
-.log{display:flex;flex-direction:column;gap:16px}
-.log li{border-left:8px solid var(--st-good);padding:2px 0 2px 22px}
-.log li.new{animation:pop .6s ease-out}
-@keyframes pop{from{transform:translateX(30px);opacity:0}to{transform:none;opacity:1}}
-.log .lt{font-size:34px;font-weight:700}
-.log .lf{font-size:27px;color:var(--st-mut);line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.log .more{font-family:var(--font-mono);font-size:26px;letter-spacing:.12em;color:var(--st-mut);border-left-color:transparent}
-.log .none{font-size:32px;color:var(--st-mut)}
-
 .big{font-family:var(--font-display);font-weight:700;font-size:80px;line-height:1.05;text-wrap:balance}
 .big.win{color:var(--st-good)}.big.lose{color:var(--st-bad)}
 .stats{display:flex;flex-direction:column;gap:8px;font-family:var(--font-mono);font-size:34px;color:var(--st-mut)}
@@ -197,12 +175,23 @@ ul,ol{padding:0;list-style:none}
 .points.dense li{font-size:24px;line-height:1.2}
 .points.dense li b{font-size:26px}
 .points.dense .pt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.ord.dense{gap:18px}
-.ord.dense .pool,.ord.dense .placed{gap:8px}
-.ord.dense .chip{font-size:25px;padding:10px 16px}
-.ord.dense .placed li{font-size:24px;padding:8px 14px}
 .rules li{font-size:40px;line-height:1.3}
-.emptyst{position:absolute;inset:0;display:flex;flex-direction:column;gap:30px;align-items:center;justify-content:center;font-size:56px;text-align:center}
+.emptyst{position:absolute;inset:0;display:flex;flex-direction:column;gap:30px;align-items:center;justify-content:center;font-size:56px;text-align:center;background:rgba(3,12,18,.9)}
+
+/* hotspots */
+.hs{position:absolute;width:150px;height:150px;margin:-75px 0 0 -75px;border:0;background:none;padding:0}
+.hs .ring{position:absolute;inset:0;border-radius:50%;border:6px solid var(--st-accent);background:radial-gradient(circle,rgba(255,200,90,.5) 0 24%,rgba(255,181,71,.16) 25% 62%,transparent 63%);animation:hsp 1.7s ease-out infinite}
+.hs .core{position:absolute;left:50%;top:50%;width:36px;height:36px;margin:-18px 0 0 -18px;border-radius:50%;background:#FFE7B0;box-shadow:0 0 34px 12px rgba(255,200,90,.85);animation:core 1.7s ease-in-out infinite}
+.hs .cap{position:absolute;top:158px;left:50%;transform:translateX(-50%);white-space:nowrap;max-width:420px;overflow:hidden;text-overflow:ellipsis;font-size:34px;font-weight:700;padding:6px 22px;border-radius:99px;background:rgba(4,17,25,.82);border:3px solid var(--st-accent)}
+.hs:hover .ring{border-color:#fff}
+@keyframes hsp{0%{box-shadow:0 0 0 0 rgba(255,181,71,.65)}100%{box-shadow:0 0 0 76px rgba(255,181,71,0)}}
+@keyframes core{50%{transform:scale(1.35);opacity:.8}}
+.hs.done{width:96px;height:96px;margin:-48px 0 0 -48px;pointer-events:none}
+.hs.done .ring{animation:none;border-color:var(--st-good);background:rgba(74,222,154,.2)}
+.hs.done .core{animation:none;width:30px;height:30px;margin:-15px 0 0 -15px;background:var(--st-good);box-shadow:0 0 20px 6px rgba(74,222,154,.7)}
+.hs.locked{width:70px;height:70px;margin:-35px 0 0 -35px;pointer-events:none}
+.hs.locked .ring{animation:none;border:4px dashed rgba(255,255,255,.5);background:rgba(0,0,0,.25)}
+.hs.locked .core{animation:none;width:14px;height:14px;margin:-7px 0 0 -7px;background:rgba(255,255,255,.6);box-shadow:none}
 
 /* effects: may cross corners, they hold no text */
 #fx{position:absolute;inset:0;pointer-events:none;overflow:hidden}
@@ -218,14 +207,14 @@ ul,ol{padding:0;list-style:none}
 .sweep.bad{background:linear-gradient(90deg,transparent,rgba(255,90,90,.4),transparent);animation-duration:.9s}
 .sweep.hint{background:linear-gradient(90deg,transparent,rgba(255,181,71,.35),transparent);animation-duration:1.1s}
 @keyframes sweep{to{left:8000px}}
-.mote{position:absolute;border-radius:50%;background:rgba(160,255,240,.5);animation:drift linear infinite alternate}
+.mote{position:absolute;border-radius:50%;background:rgba(200,255,245,.55);animation:drift linear infinite alternate}
 @keyframes drift{from{transform:translate(0,0)}to{transform:translate(260px,-180px)}}
 .conf{position:absolute;top:-60px;width:18px;height:30px;animation:fall linear forwards}
 @keyframes fall{to{transform:translate(var(--dx),1200px) rotate(var(--rot))}}
 .guides{display:none;position:absolute;inset:0}
 .stage.g .guides{display:block}
-.guides b{position:absolute;top:0;bottom:0;width:280px;background:rgba(255,80,80,.18)}
-.guides b.e{width:140px}
+.guides b{position:absolute;top:0;bottom:0;width:300px;background:rgba(255,80,80,.18)}
+.guides b.e{width:150px}
 .guides i{position:absolute;top:0;bottom:0;width:0;border-left:3px dashed rgba(255,120,120,.9)}
 
 /* edit forms */
@@ -251,6 +240,13 @@ ul,ol{padding:0;list-style:none}
 .paste summary{font-weight:700;cursor:pointer}
 .paste .inner{display:flex;flex-direction:column;gap:12px;margin-top:14px}
 pre.prompt{margin:0;white-space:pre-wrap;word-break:break-word;font-family:var(--font-mono);font-size:.82rem;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:12px}
+.pickwrap{display:flex;flex-direction:column;gap:10px;border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:var(--bg)}
+.pick{position:relative;width:100%;aspect-ratio:8000/1080;border-radius:10px;overflow:hidden;cursor:crosshair;background:#0A2530}
+.pick svg{width:100%;height:100%;display:block;pointer-events:none}
+.pick .zone{position:absolute;top:0;bottom:0;background:rgba(255,80,80,.22);pointer-events:none}
+.pick .cl{position:absolute;top:0;bottom:0;border-left:2px dashed rgba(255,130,130,.9);pointer-events:none}
+.pin{position:absolute;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:#FFB547;color:#2A1A00;font:700 14px/26px var(--font-body);text-align:center;border:2px solid #fff;pointer-events:none}
+.pin.sel{background:#fff;color:#000;box-shadow:0 0 0 4px #FFB547}
 @media (max-width:640px){
   .grid3,.opts,.grid2{grid-template-columns:minmax(0,1fr)}
 }
@@ -263,13 +259,13 @@ pre.prompt{margin:0;white-space:pre-wrap;word-break:break-word;font-family:var(-
   <header class="top">
     <p class="eyebrow">Igloo concept prototype · 8000 × 1080 · four walls</p>
     <h1>Escape Room</h1>
-    <p class="lede">A team works through locked doors against the clock. Each door is one puzzle: a code lock, a multiple-choice question, a sequence to put in order, or a set of pairs to match. The sample is a nursing and healthcare case. To make your own, change the story and puzzles in Edit, or build it on a laptop and share it as a link.</p>
+    <p class="lede">The team stands inside an illustrated ward and looks for the glowing object on the walls. Clicking it reveals the lock: a code, a multiple-choice question, a sequence to put in order, or pairs to match. The sample is a nursing and healthcare case. To make your own, change the story and puzzles in Edit, move the hotspots, or build it on a laptop and share it as a link.</p>
   </header>
   <div class="bar" id="bar"></div>
   <div id="share"></div>
   <div id="banner"></div>
   <main id="host"></main>
-  <p class="foot">Concept prototype for customer research. Laid out for a cube-shaped room with a corner every 2,000 px: all text stays 140 px clear of each corner, and only light effects cross them. Turn on Corner guides to check this. Sound needs a click first, because browsers block audio until then. The sample clinical content is fictional and written for teaching illustration, so a lecturer should check every clinical detail before using it with students. Edits last until the page is closed unless you share a link, and share links work on the hosted copy of this page. This has not been tested on a real display yet.</p>
+  <p class="foot">Concept prototype for customer research. The ward is an illustration drawn in the browser, not a photograph. To use real photos or renders instead, paste the web address of an 8000 × 1080 picture into Edit, then place the hotspots on it. Laid out for a cube-shaped room with a corner every 2,000 px: all text stays 150 px clear of each corner, and only the picture and light effects cross them. Turn on Corner guides to check. Sound needs a click first, because browsers block audio until then. The sample clinical content is fictional and written for teaching illustration, so a lecturer should check every clinical detail before using it with students. Edits last until the page is closed unless you share a link, and share links work on the hosted copy of this page. This has not been tested on a real display yet.</p>
 </div>
 
 <script>
@@ -278,44 +274,45 @@ pre.prompt{margin:0;white-space:pre-wrap;word-break:break-word;font-family:var(-
 var $=function(s){return document.querySelector(s)};
 var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
 var shuffle=function(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t}return a};
-var mode='play',real=false,guides=false;
+var clamp=function(v,a,b){return Math.max(a,Math.min(b,v))};
+var mode='play',real=false,guides=false,pickIdx=0;
 
 /* ---------- content the lecturer edits ---------- */
 var R={
   title:'Ward 7 Lockdown',
-  story:'It is 05:40 on Ward 7. The overnight safety check has flagged a possible medication error, and the ward doors have locked until it is resolved. The day team arrives at handover and everything must be safe by then. Work through five locked rooms as a nursing team before time runs out.',
-  minutes:20,wrongPenalty:20,hintPenalty:60,
+  story:'It is 05:40 on Ward 7. The overnight safety check has flagged a possible medication error, and the ward doors have locked until it is resolved. The day team arrives at handover and everything must be safe by then. Find the glowing objects and open five locks as a nursing team before time runs out.',
+  minutes:20,wrongPenalty:20,hintPenalty:60,bgImage:'',
   winText:'The doors open and the ward is safe for handover. Well done, team.',
   loseText:'The handover team arrived before the ward was safe. Look at what you missed, then try again.',
   puzzles:[
-    {type:'code',title:'Medication room',
+    {type:'code',title:'Medication cabinet',hx:1355,hy:470,
      scene:'The medication cabinet is locked with a keypad. A sticker reads: Enter the volume to give. On the wall is a prescription for a patient who cannot swallow tablets: 750 mg of an antibiotic syrup. The bottle label says 250 mg in every 5 mL.',
      prompt:'How many millilitres should the patient receive?',answer:'15',options:['','','',''],correct:0,steps:'',pairs:'',
      hint:'Work out how many 250 mg doses are in 750 mg, then multiply by the volume that holds one dose.',
      found:'The cabinet opens. Inside is the patient\'s medication chart and a key card for the next room.',
      teach:'Check every calculation with a second nurse, and confirm the right patient, drug, dose, route and time before giving any medicine.'},
-    {type:'order',title:'Resus bay',
-     scene:'A training mannequin lies on the trolley with a note: Assess in the right order, or the door stays shut. A laminated card shows five assessment steps, but they have been shuffled.',
+    {type:'order',title:'Resus trolley',hx:2580,hy:490,
+     scene:'A training mannequin lies on the bed with a note: Assess in the right order, or the drawer stays shut. A laminated card on the trolley shows five assessment steps, but they have been shuffled.',
      prompt:'Put the ABCDE assessment steps in the order you would carry them out.',answer:'',options:['','','',''],correct:0,
      steps:'Airway: is it open and clear?\nBreathing: rate, effort and oxygen levels\nCirculation: pulse, blood pressure and skin\nDisability: level of consciousness and blood glucose\nExposure: look at the whole patient and keep them warm',pairs:'',
      hint:'The letters A, B, C, D, E give the order away.',
      found:'The trolley drawer slides open. Inside is a pager with an urgent message from Bay 4.',
      teach:'The ABCDE approach deals with the most immediately life-threatening problems first, and each problem is treated as it is found.'},
-    {type:'choose',title:'Bay 4',
+    {type:'choose',title:'Mr Hassan',hx:5155,hy:650,
      scene:'Mr Hassan, aged 72, stood up from his chair and says he feels faint. His pulse is fast at 124 and his blood pressure is low at 88/54. He is pale and sweating.',
      prompt:'What is the best first action?',answer:'',
      options:['Help him to lie down safely and call urgently for senior help','Encourage him to walk around to improve his circulation','Offer a cup of tea and check on him again in an hour','Record the readings and carry on with the medication round'],correct:0,steps:'',pairs:'',
      hint:'His observations show his body is struggling. Think safety first, then help.',
      found:'Mr Hassan is safe and a doctor is on the way. A sealed envelope marked SBAR is on his locker.',
      teach:'A patient who is deteriorating needs immediate help and escalation. Making them safe comes first, and routine tasks must not delay an urgent call.'},
-    {type:'match',title:'Nurses\' station',
-     scene:'You must hand Mr Hassan over to the doctor on the phone. An SBAR template is pinned to the wall, but the descriptions have fallen off the board.',
+    {type:'match',title:'Ward phone',hx:6925,hy:605,
+     scene:'You must hand Mr Hassan over to the doctor on the phone. An SBAR template is pinned to the board behind the desk, but the descriptions have fallen off.',
      prompt:'Match each part of SBAR to what you say.',answer:'',options:['','','',''],correct:0,steps:'',
      pairs:'Situation | What is happening right now\nBackground | Relevant history and what has been done so far\nAssessment | What you think the problem is, with the latest observations\nRecommendation | What you need and by when',
      hint:'Recommendation is your request: what do you want the doctor to do?',
-     found:'The phone line clears and the doctor confirms they are coming. A final panel lights up at the ward exit.',
+     found:'The phone line clears and the doctor confirms they are coming. A final panel lights up by the ward exit.',
      teach:'A structured handover such as SBAR keeps communication short, clear and complete, so the right person can act quickly.'},
-    {type:'code',title:'Ward exit',
+    {type:'code',title:'Exit keypad',hx:7195,hy:540,
      scene:'The last lock needs the pump rate for a patient who needs intravenous fluids. The prescription says 1000 mL over 8 hours, given using an infusion pump.',
      prompt:'What rate should you set on the pump, in mL per hour?',answer:'125',options:['','','',''],correct:0,steps:'',pairs:'',
      hint:'Divide the total volume by the number of hours.',
@@ -323,10 +320,15 @@ var R={
      teach:'An infusion pump delivers exactly what is entered, so check the prescription, calculate the rate and have it independently checked.'}
   ]
 };
-var ROOM_PROMPT='Write an escape room for [course and level] about [topic]. Use exactly this format, one item per line, with no extra text. Give 5 puzzles. Use a mix of the four puzzle types: code (the answer is a number), choose (multiple choice), order (steps in the correct order) and match (pairs).\n\nROOM: Title of the escape room\nSTORY: 2 to 3 sentences setting the scene.\nMINUTES: 20\n\nPUZZLE: code\nTITLE: Name of the room\nSCENE: What the team sees in this room.\nPROMPT: The question to answer.\nANSWER: 15\nHINT: A nudge without giving the answer.\nFOUND: What the team finds when it unlocks.\nTEACH: The key teaching point.\n\nPUZZLE: choose\nTITLE: ...\nSCENE: ...\nPROMPT: ...\nOPTION: A wrong answer\nOPTION: * The correct answer\nOPTION: Another wrong answer\nHINT: ...\nFOUND: ...\nTEACH: ...\n\nPUZZLE: order\nTITLE: ...\nSCENE: ...\nPROMPT: ...\nSTEP: First step\nSTEP: Second step\nSTEP: Third step\nHINT: ...\nFOUND: ...\nTEACH: ...\n\nPUZZLE: match\nTITLE: ...\nSCENE: ...\nPROMPT: ...\nPAIR: Term | Matching description\nPAIR: Term | Matching description\nHINT: ...\nFOUND: ...\nTEACH: ...';
+var ROOM_PROMPT='Write an escape room for [course and level] about [topic]. Use exactly this format, one item per line, with no extra text. Give 5 puzzles. Use a mix of the four puzzle types: code (the answer is a number), choose (multiple choice), order (steps in the correct order) and match (pairs). Name each puzzle after the object the team clicks on, such as Medication cabinet or Ward phone.\n\nROOM: Title of the escape room\nSTORY: 2 to 3 sentences setting the scene.\nMINUTES: 20\n\nPUZZLE: code\nTITLE: Name of the object\nSCENE: What the team sees at this object.\nPROMPT: The question to answer.\nANSWER: 15\nHINT: A nudge without giving the answer.\nFOUND: What the team finds when it unlocks.\nTEACH: The key teaching point.\n\nPUZZLE: choose\nTITLE: ...\nSCENE: ...\nPROMPT: ...\nOPTION: A wrong answer\nOPTION: * The correct answer\nOPTION: Another wrong answer\nHINT: ...\nFOUND: ...\nTEACH: ...\n\nPUZZLE: order\nTITLE: ...\nSCENE: ...\nPROMPT: ...\nSTEP: First step\nSTEP: Second step\nSTEP: Third step\nHINT: ...\nFOUND: ...\nTEACH: ...\n\nPUZZLE: match\nTITLE: ...\nSCENE: ...\nPROMPT: ...\nPAIR: Term | Matching description\nPAIR: Term | Matching description\nHINT: ...\nFOUND: ...\nTEACH: ...';
 
 /* ---------- helpers ---------- */
-function blankPuzzle(type){return {type:type||'code',title:'',scene:'',prompt:'',answer:'',options:['','','',''],correct:0,steps:'',pairs:'',hint:'',found:'',teach:''}}
+function defPos(i){var w=i%4,off=i>=4?(i%2?320:-320):0;return {x:w*2000+1000+off,y:560}}
+function ensurePos(list){list.forEach(function(p,i){if(p.hx==null||p.hy==null||isNaN(+p.hx)||isNaN(+p.hy)){var d=defPos(i);p.hx=d.x;p.hy=d.y}})}
+function clampX(x){var w=clamp(Math.floor(x/2000),0,3);return clamp(x,w*2000+370,w*2000+1630)}
+function hpos(p){return {x:clampX(+p.hx),y:clamp(+p.hy,220,820)}}
+function wallOf(x){return clamp(Math.floor(x/2000),0,3)}
+function blankPuzzle(type){return {type:type||'code',title:'',hx:null,hy:null,scene:'',prompt:'',answer:'',options:['','','',''],correct:0,steps:'',pairs:'',hint:'',found:'',teach:''}}
 function normPuzzle(p){
   var b=blankPuzzle(p&&p.type);
   for(var k in b){if(p&&p[k]!=null)b[k]=p[k]}
@@ -352,6 +354,258 @@ function problem(p){
 function puzzles(){return R.puzzles.filter(function(p){return !problem(p)})}
 function fmt(sec){sec=Math.max(0,Math.ceil(sec));var m=Math.floor(sec/60),s=sec%60;return (m<10?'0':'')+m+':'+(s<10?'0':'')+s}
 var TYPES={code:'Code lock',choose:'Multiple choice',order:'Put in order',match:'Match pairs'};
+function okImg(u){return /^https?:\/\/\S+$/i.test(String(u||'').trim())}
+
+/* ---------- the room: an illustrated ward drawn across four 2000 px walls ---------- */
+function roomSVG(pre,bg){
+  var o=[],seed=11;
+  function rnd(){seed=(seed*16807)%2147483647;return seed/2147483647}
+  var u=function(n){return 'url(#'+pre+n+')'};
+  function rect(x,y,w,h,f,ex){o.push('<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="'+f+'"'+(ex||'')+'/>')}
+  function rr(x,y,w,h,r,f,ex){o.push('<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+r+'" fill="'+f+'"'+(ex||'')+'/>')}
+  function circ(cx,cy,r,f,ex){o.push('<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="'+f+'"'+(ex||'')+'/>')}
+  function ell(cx,cy,rx,ry,f,ex){o.push('<ellipse cx="'+cx+'" cy="'+cy+'" rx="'+rx+'" ry="'+ry+'" fill="'+f+'"'+(ex||'')+'/>')}
+  function path(d,f,ex){o.push('<path d="'+d+'" fill="'+f+'"'+(ex||'')+'/>')}
+  function line(x1,y1,x2,y2,c,w,ex){o.push('<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+c+'" stroke-width="'+w+'"'+(ex||'')+'/>')}
+  function text(x,y,t,size,f,ex){o.push('<text x="'+x+'" y="'+y+'" font-size="'+size+'" fill="'+f+'" font-family="Figtree,Segoe UI,sans-serif" font-weight="700" text-anchor="middle"'+(ex||'')+'>'+t+'</text>')}
+  function shade(x,y,w,h,op,blur,r){o.push('<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="'+(r||12)+'" fill="#000" opacity="'+op+'" filter="url(#'+pre+(blur||'b14')+')"/>')}
+  function floorShadow(cx,rx,op){ell(cx,884,rx,22,'#000',' opacity="'+(op||.5)+'" filter="url(#'+pre+'b14)"')}
+  function wheel(cx){circ(cx,856,20,'#111A1D');circ(cx,856,8,'#5C7176')}
+  var head='<svg viewBox="0 0 8000 1080" width="8000" height="1080" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">';
+  if(bg&&okImg(bg)){
+    return head+'<image href="'+esc(bg.trim())+'" x="0" y="0" width="8000" height="1080" preserveAspectRatio="xMidYMid slice"/>'
+      +'<rect width="8000" height="1080" fill="url(#'+pre+'tint)"/><defs><linearGradient id="'+pre+'tint" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".25"/><stop offset=".3" stop-color="#000" stop-opacity="0"/><stop offset=".8" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".35"/></linearGradient></defs></svg>';
+  }
+  o.push('<defs>'
+    +'<linearGradient id="'+pre+'wall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8FB4B5"/><stop offset=".55" stop-color="#668A8E"/><stop offset="1" stop-color="#4A6C72"/></linearGradient>'
+    +'<linearGradient id="'+pre+'lower" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#486A71"/><stop offset="1" stop-color="#2F4B52"/></linearGradient>'
+    +'<linearGradient id="'+pre+'floor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2C4148"/><stop offset=".4" stop-color="#1A2B31"/><stop offset="1" stop-color="#0A1418"/></linearGradient>'
+    +'<linearGradient id="'+pre+'ceil" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0A1519"/><stop offset="1" stop-color="#22373D"/></linearGradient>'
+    +'<linearGradient id="'+pre+'steel" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7E949A"/><stop offset=".3" stop-color="#C9D8DB"/><stop offset=".6" stop-color="#93A8AD"/><stop offset="1" stop-color="#5C7278"/></linearGradient>'
+    +'<linearGradient id="'+pre+'steelv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D8E5E7"/><stop offset="1" stop-color="#8095A0"/></linearGradient>'
+    +'<linearGradient id="'+pre+'rail" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#EAF0EE"/><stop offset=".5" stop-color="#BFCFCE"/><stop offset="1" stop-color="#8CA2A3"/></linearGradient>'
+    +'<linearGradient id="'+pre+'cab" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#CFDDDF"/><stop offset="1" stop-color="#93A9AE"/></linearGradient>'
+    +'<linearGradient id="'+pre+'wood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D8B887"/><stop offset="1" stop-color="#A57F52"/></linearGradient>'
+    +'<linearGradient id="'+pre+'red" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#B22B2B"/><stop offset=".45" stop-color="#E24A44"/><stop offset="1" stop-color="#8E1F20"/></linearGradient>'
+    +'<linearGradient id="'+pre+'glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".30"/><stop offset=".4" stop-color="#fff" stop-opacity=".05"/><stop offset=".5" stop-color="#fff" stop-opacity=".16"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>'
+    +'<linearGradient id="'+pre+'night" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#07122A"/><stop offset=".7" stop-color="#1B3E6B"/><stop offset="1" stop-color="#2B5A86"/></linearGradient>'
+    +'<linearGradient id="'+pre+'cone" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4FFFB" stop-opacity=".30"/><stop offset="1" stop-color="#F4FFFB" stop-opacity="0"/></linearGradient>'
+    +'<linearGradient id="'+pre+'door" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8FAAA6"/><stop offset=".5" stop-color="#B5CBC7"/><stop offset="1" stop-color="#7E9894"/></linearGradient>'
+    +'<linearGradient id="'+pre+'curt" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3F6C92"/><stop offset=".5" stop-color="#6F9DC3"/><stop offset="1" stop-color="#3F6C92"/></linearGradient>'
+    +'<radialGradient id="'+pre+'pool"><stop offset="0" stop-color="#F4FFFB" stop-opacity=".42"/><stop offset="1" stop-color="#F4FFFB" stop-opacity="0"/></radialGradient>'
+    +'<radialGradient id="'+pre+'glow"><stop offset="0" stop-color="#6BFFB4" stop-opacity=".7"/><stop offset="1" stop-color="#6BFFB4" stop-opacity="0"/></radialGradient>'
+    +'<linearGradient id="'+pre+'seam" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset=".5" stop-color="#000" stop-opacity=".62"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>'
+    +'<linearGradient id="'+pre+'edgeL" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".38"/><stop offset="1" stop-color="#000" stop-opacity="0"/></linearGradient>'
+    +'<linearGradient id="'+pre+'edgeR" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".38"/></linearGradient>'
+    +'<linearGradient id="'+pre+'mood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity=".30"/><stop offset=".25" stop-color="#000" stop-opacity="0"/><stop offset=".75" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".40"/></linearGradient>'
+    +'<filter id="'+pre+'b14" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="14"/></filter>'
+    +'<filter id="'+pre+'b24" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="24"/></filter>'
+    +'<filter id="'+pre+'b8" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="8"/></filter>'
+    +'</defs>');
+  // shell: ceiling, wall, rail, lower panel, skirting, floor
+  rect(0,0,8000,130,u('ceil'));
+  rect(0,120,8000,530,u('wall'));
+  [['#79C2B0',.12],['#7AA4D8',.10],['#D9C69A',.10],['#7FD0C8',.12]].forEach(function(t,w){rect(w*2000,120,2000,530,t[0],' opacity="'+t[1]+'"')});
+  rect(0,660,8000,196,u('lower'));
+  for(var w=0;w<4;w++){for(var k=1;k<8;k++){rect(w*2000+k*250-1,672,2,180,'#000',' opacity=".18"');rect(w*2000+k*250+1,672,1,180,'#fff',' opacity=".05"')}}
+  rr(0,634,8000,32,6,u('rail'));rect(0,666,8000,12,'#000',' opacity=".28"');
+  rect(0,850,8000,26,'#16262B');rect(0,876,8000,204,u('floor'));
+  for(var w2=0;w2<4;w2++){
+    var x0=w2*2000;
+    o.push('<clipPath id="'+pre+'cw'+w2+'"><rect x="'+x0+'" y="876" width="2000" height="204"/></clipPath><g clip-path="'+u('cw'+w2)+'">');
+    for(var i=-5;i<=5;i++)line(x0+1000+i*160,876,x0+1000+i*520,1080,'#000',2,' opacity=".28"');
+    [900,935,978,1030,1090].forEach(function(y){line(x0,y,x0+2000,y,'#000',2,' opacity=".25"')});
+    o.push('</g>');
+    // ceiling lights, light cones and floor pools
+    [430,1000,1570].forEach(function(cx){
+      path('M'+(x0+cx-180)+' 128 L'+(x0+cx+180)+' 128 L'+(x0+cx+360)+' 660 L'+(x0+cx-360)+' 660 Z',u('cone'));
+      ell(x0+cx,960,420,52,u('pool'));
+      rr(x0+cx-190,64,380,36,6,'#CDD8DA');rr(x0+cx-176,72,352,20,4,'#F6FFFC');
+      rr(x0+cx-230,56,460,52,26,'#F4FFFB',' opacity=".12" filter="url(#'+pre+'b14)"');
+    });
+  }
+
+  /* ===== wall 1: medication room (0 to 2000) ===== */
+  // noticeboard and posters near the left corner
+  rr(170,250,300,200,8,'#C9A777');rr(180,260,280,180,4,'#E6D2A9');
+  [[200,280,110,70,'#F4F7F7'],[330,280,100,60,'#CFE6F2'],[210,370,90,56,'#F7E1B0'],[320,360,110,66,'#F4F7F7']].forEach(function(a){rect(a[0],a[1],a[2],a[3],a[4]);rect(a[0]+8,a[1]+10,a[2]-16,6,'#9AAAB0');rect(a[0]+8,a[1]+26,a[2]-30,5,'#B7C5C9')});
+  // base cabinets and worktop
+  shade(268,690,1330,190,.45);
+  rect(290,690,1290,160,u('cab'));
+  for(var c=1;c<5;c++)rect(290+c*258-1,696,2,154,'#000',' opacity=".25"');
+  for(var c2=0;c2<5;c2++)rr(290+c2*258+108,714,42,9,4,'#E9F1F2');
+  rr(260,664,1350,32,6,u('steel'));
+  // sink and tap
+  rr(1260,640,230,22,6,'#0F1F23');
+  path('M1360 640 V570 Q1360 540 1392 540 H1424','none',' stroke="#C9D8DB" stroke-width="14" stroke-linecap="round"');
+  // wall cabinet
+  shade(432,196,890,480,.5,'b24',16);
+  rr(440,190,870,470,10,u('steel'));
+  rect(462,212,826,426,'#0D1B1F');
+  [316,416,516].forEach(function(y){rect(462,y,826,8,'#8CA2A8')});
+  var rows=[308,408,508,634],pal=['#EEF4F4','#CFE6F2','#F4DDAA','#CFE3BC','#EFC3C3','#DCE3F5'];
+  rows.forEach(function(yb){
+    var x=474;
+    while(x<1260){
+      var bw=36+Math.round(rnd()*48),bh=44+Math.round(rnd()*50);
+      if(rnd()<.32){
+        rr(x,yb-bh,Math.round(bw*.7),bh,8,'#8C5A2B');rect(x+Math.round(bw*.1),yb-bh-12,Math.round(bw*.5),12,'#F1F5F5');rect(x+4,yb-bh*.55,Math.round(bw*.7)-8,bh*.3,'#F4EEE2');
+      }else{
+        var col=pal[Math.floor(rnd()*pal.length)];
+        rect(x,yb-bh,bw,bh,col);rect(x,yb-Math.round(bh*.55),bw,5,'#2C6C86',' opacity=".7"');rect(x+4,yb-bh+6,bw-8,4,'#000',' opacity=".15"');
+      }
+      x+=bw+5+Math.round(rnd()*9);
+    }
+  });
+  rect(462,212,408,426,u('glass'));rect(880,212,408,426,u('glass'));
+  rect(868,212,12,426,'#9DB2B8');
+  rr(846,376,10,100,5,'#E1EBED');rr(892,376,10,100,5,'#E1EBED');
+  rr(690,196,380,22,4,'#12383F');text(880,213,'MEDICATION',17,'#9FE8DC',' letter-spacing="4"');
+  // electronic lock keypad on the right side of the cabinet
+  shade(1316,356,100,226,.5,'b8');
+  rr(1318,358,84,220,10,'#0E181B');rr(1328,370,64,34,5,'#06241B');rect(1338,383,44,8,'#34D399',' opacity=".75"');circ(1336,420,5,'#FF5A5A');
+  for(var r1=0;r1<4;r1++)for(var c1=0;c1<3;c1++)circ(1340+c1*20,446+r1*30,8,'#3C5258');
+  // clock and sanitiser
+  circ(1730,300,82,'#15262B');circ(1730,300,74,'#F4F8F8');
+  for(var t=0;t<12;t++){var a=t*Math.PI/6;line(1730+Math.sin(a)*60,300-Math.cos(a)*60,1730+Math.sin(a)*68,300-Math.cos(a)*68,'#23363C',4)}
+  line(1730,300,1730+Math.sin(2.97)*38,300-Math.cos(2.97)*38,'#1B2C32',7,' stroke-linecap="round"');
+  line(1730,300,1730+Math.sin(4.19)*56,300-Math.cos(4.19)*56,'#1B2C32',4,' stroke-linecap="round"');
+  circ(1730,300,6,'#D14B3B');
+  shade(1768,490,60,120,.4,'b8');
+  rr(1770,484,54,112,10,'#EAF2F2');rr(1784,462,26,28,6,'#B9CBCD');rr(1778,540,38,30,6,'#7DC3E8',' opacity=".8"');
+  floorShadow(950,700,.55);
+
+  /* ===== wall 2: resus bay (2000 to 4000) ===== */
+  // monitor on wall bracket
+  shade(3172,150,400,170,.5,'b14');
+  rr(3180,152,380,150,12,'#0F181B');rect(3194,166,352,122,'#031511');
+  o.push('<polyline points="'+(function(){var p=[];for(var i=0;i<=30;i++){var x=3202+i*7.6,y=240-(i%11===5?48:(i%11===6?-26:(i%11===7?10:Math.sin(i)*3)));p.push(x.toFixed(0)+','+y.toFixed(0))}return p.join(' ')})()+'" fill="none" stroke="#4CFF9A" stroke-width="4" stroke-linejoin="round"/>');
+  text(3470,196,'72',34,'#4CFF9A');text(3470,236,'98',30,'#58D9FF');text(3470,276,'120/80',26,'#FFE066');
+  line(3370,302,3370,330,'#8CA2A8',14);
+  // oxygen and suction panel
+  shade(3016,336,790,150,.45,'b14');
+  rr(3020,332,780,148,12,'#2B3F45');
+  [['#2EA36B',3090],['#E3C536',3180],['#F2F6F6',3270]].forEach(function(a){circ(a[1],398,28,'#10191C');circ(a[1],398,20,a[0]);circ(a[1],398,8,'#10191C')});
+  [3470,3610].forEach(function(cx){circ(cx,398,42,'#10191C');circ(cx,398,36,'#F4F8F8');line(cx,398,cx+16,382,'#C93A3A',4);circ(cx,398,4,'#23363C')});
+  rect(3010,490,800,16,'#B7C8CB');
+  // bed with mannequin
+  floorShadow(3400,440,.55);shade(3004,690,800,180,.4);
+  rr(2990,520,30,250,10,u('steelv'));rr(3780,600,26,170,10,u('steelv'));
+  rr(3000,716,800,34,8,u('steel'));
+  rect(3040,750,16,100,'#8EA2A8');rect(3750,750,16,100,'#8EA2A8');wheel(3048);wheel(3758);
+  rr(3012,636,780,84,24,'#2E5A88');
+  rr(3030,594,180,54,26,'#F1F6F6');
+  circ(3118,590,36,'#DDB79C');path('M3084 584 Q3118 540 3152 584 Q3118 566 3084 584Z','#6F5648');circ(3130,592,3,'#4A3A30');
+  rr(3190,616,600,92,26,'#72A9CC');
+  [3300,3420,3560,3680].forEach(function(x){path('M'+x+' 622 q14 40 0 80','none',' stroke="#4F86AA" stroke-width="3" opacity=".6"')});
+  // IV stand
+  rect(3896,270,10,590,'#A9BBC0');rect(3856,266,90,10,'#A9BBC0');rr(3866,284,44,86,10,'#D8EBF6',' opacity=".9"');rr(3872,320,32,44,6,'#8CC7E8');
+  path('M3888 370 C3888 430 3800 470 3800 560','none',' stroke="#CFE6F4" stroke-width="4" opacity=".8"');
+  rr(3868,852,80,10,4,'#5C7176');
+  // crash trolley
+  floorShadow(2580,330,.6);shade(2318,420,520,450,.45,'b24');
+  rr(2370,300,420,124,12,'#2A383D');rr(2396,318,206,88,6,'#07150F');
+  o.push('<polyline points="'+(function(){var p=[];for(var i=0;i<=20;i++){var x=2406+i*9.5,y=366-(i%7===3?30:(i%7===4?-18:Math.sin(i)*3));p.push(x.toFixed(0)+','+y.toFixed(0))}return p.join(' ')})()+'" fill="none" stroke="#4CFF9A" stroke-width="4"/>');
+  rr(2630,330,126,24,12,'#E88A1A');circ(2650,388,14,'#D93A3A');circ(2690,388,14,'#2EA36B');circ(2730,388,14,'#E3C536');
+  rr(2330,424,500,416,10,u('red'));
+  for(var d=0;d<4;d++){rr(2350,442+d*98,460,86,8,'#A82526');rr(2350,442+d*98,460,6,3,'#fff',' opacity=".25"');rr(2510,442+d*98+34,140,16,8,'#E9F1F2');rect(2364,442+d*98+16,60,18,'#F4F7F7',' opacity=".9"')}
+  rr(2330,836,500,18,6,'#2A2E30');wheel(2372);wheel(2788);
+  // framed notice near the right corner and left of trolley
+  rr(2110,300,170,230,8,'#E4EEEE');rect(2124,316,142,10,'#2C6C86');[0,1,2,3,4,5].forEach(function(i){rect(2124,346+i*24,142-(i%3)*18,6,'#9AAAB0')});
+
+  /* ===== wall 3: Bay 4 (4000 to 6000) ===== */
+  // window onto the night
+  shade(4410,214,1000,380,.45,'b24');
+  rr(4420,210,980,360,10,'#E6EEEE');rect(4440,230,940,320,u('night'));
+  circ(5160,300,30,'#F4F6E2');circ(5160,300,60,'#F4F6E2',' opacity=".12"');
+  for(var b=0;b<26;b++){var bx=4440+b*36,bh2=40+Math.round(rnd()*130);rect(bx,550-bh2,34,bh2,'#08111F');for(var wy=0;wy<bh2-14;wy+=18){if(rnd()<.5)rect(bx+5+(rnd()<.5?0:14),550-bh2+8+wy,8,8,'#FFD36B',' opacity="'+(.5+rnd()*.5).toFixed(2)+'"')}}
+  rect(4905,230,10,320,'#E6EEEE');rect(5150,230,10,320,'#E6EEEE');
+  for(var y=232;y<296;y+=11)rect(4440,y,940,7,'#D7E1E1',' opacity=".88"');
+  rr(4400,566,1020,18,4,'#CFDADA');
+  // empty hospital bed
+  floorShadow(4410,340,.55);shade(4090,700,660,170,.4);
+  rr(4080,560,26,200,10,u('steelv'));rr(4100,716,640,34,8,u('steel'));rect(4120,750,16,100,'#8EA2A8');rect(4700,750,16,100,'#8EA2A8');wheel(4128);wheel(4708);
+  rr(4100,650,620,76,20,'#2E5A88');rr(4112,606,150,52,24,'#F1F6F6');rr(4290,636,420,76,22,'#72A9CC');
+  // armchair and patient
+  floorShadow(5150,320,.6);shade(4900,520,510,340,.45,'b24');
+  rr(4930,520,450,270,44,'#2C6A5B');rr(4960,544,390,36,18,'#fff',' opacity=".1"');
+  rr(4910,724,490,112,28,'#347866');rr(4896,640,64,160,26,'#265B4E');rr(5350,640,64,160,26,'#265B4E');
+  rect(4944,836,24,24,'#161E20');rect(5342,836,24,24,'#161E20');
+  rr(5070,786,70,110,22,'#56646F');rr(5170,786,70,110,22,'#56646F');rr(5062,880,86,26,12,'#222B2F');rr(5164,880,86,26,12,'#222B2F');
+  rr(5040,588,230,210,52,'#CBE0F0');
+  for(var gy=0;gy<5;gy++)for(var gx=0;gx<6;gx++)circ(5062+gx*34+(gy%2)*14,612+gy*38,3,'#7FA9C6',' opacity=".6"');
+  rr(5020,636,40,156,20,'#CBE0F0');rr(5250,636,40,156,20,'#CBE0F0');
+  circ(5040,806,20,'#DDB79C');circ(5270,806,20,'#DDB79C');rect(5020,784,40,10,'#fff');rect(5020,787,40,3,'#D94B4B');
+  path('M5112 556 Q5112 500 5160 500 Q5208 500 5208 556 Q5190 528 5160 530 Q5130 528 5112 556Z','#B8C0C5');
+  ell(5160,562,48,54,'#E2B896');path('M5112 548 Q5160 506 5208 548 Q5190 526 5160 526 Q5132 526 5112 548Z','#B8C0C5');
+  line(5136,566,5150,568,'#4A3A30',3,' stroke-linecap="round"');line(5170,568,5184,566,'#4A3A30',3,' stroke-linecap="round"');
+  path('M5148 592 Q5160 586 5172 592','none',' stroke="#8B5E4B" stroke-width="3" stroke-linecap="round"');
+  ell(5140,542,10,6,'#fff',' opacity=".5"');ell(5182,552,7,5,'#fff',' opacity=".4"');
+  // locker with envelope and jug
+  floorShadow(5640,170,.5);
+  rr(5524,590,232,262,10,'#C6D3D3');rect(5536,604,208,2,'#000',' opacity=".2"');rr(5546,620,188,100,6,'#B2C2C3');rr(5546,730,188,100,6,'#B2C2C3');rr(5622,664,36,10,5,'#E9F1F2');rr(5622,774,36,10,5,'#E9F1F2');
+  rr(5512,574,256,20,6,u('steel'));
+  rr(5548,500,52,76,10,'#CFE6F4',' opacity=".82"');rect(5548,540,52,36,'#8CC7E8',' opacity=".7"');rr(5614,552,22,24,4,'#EEF4F4');
+  path('M5650 574 L5740 574 L5740 546 L5650 546Z','#F6F8F8');path('M5650 546 L5695 566 L5740 546','none',' stroke="#B7C5C9" stroke-width="3"');
+  // curtain
+  rect(5700,128,300,8,'#A9BBC0');
+  for(var cv=0;cv<14;cv++){var cx2=5800+cv*14;rect(cx2,136,14,664,cv%2?u('curt'):'#4D7CA2');circ(cx2+7,132,4,'#DCE6E8')}
+  rect(5800,136,196,664,'#000',' opacity=".06"');
+
+  /* ===== wall 4: nurses' station and exit (6000 to 8000) ===== */
+  // whiteboard
+  shade(6272,204,820,310,.45,'b14');
+  rr(6280,200,800,300,8,'#DCE6E6');rect(6296,216,768,260,'#F8FBFB');
+  [['S','#D9504C'],['B','#3E7CC1'],['A','#E4A22B'],['R','#3BAE76']].forEach(function(a,i){
+    var y=226+i*52;circ(6344,y+26,24,a[1]);text(6344,y+36,a[0],28,'#fff');
+    rect(6394,y+10,560,10,'#C3CFD2');rect(6394,y+30,420,8,'#D8E0E1');
+  });
+  rect(6296,478,768,12,'#9FB2B7');
+  // desk, monitor and phone
+  floorShadow(6670,470,.5);shade(6232,664,880,200,.4);
+  rect(6250,694,840,156,'#2D484F');rect(6250,694,840,6,'#fff',' opacity=".08"');
+  rr(6226,652,888,40,6,u('wood'));
+  shade(6384,446,336,200,.4,'b8');
+  rr(6390,442,320,176,10,'#0F181B');rect(6402,454,296,150,'#143C4C');
+  [0,1,2,3,4].forEach(function(i){rect(6414,468+i*26,i%2?190:240,10,'#9FD9E8',' opacity=".75"');rect(6666,468+i*26,18,10,i===2?'#FF7A7A':'#7DE3B0')});
+  rect(6538,618,44,34,'#1A2A30');rr(6490,642,140,12,6,'#1A2A30');
+  rr(6410,630,260,16,6,'#2D3A3F');
+  rr(6760,618,26,34,5,'#E6EEEE');
+  shade(6840,590,170,70,.4,'b8');
+  rr(6852,622,150,34,8,'#1B262A');
+  for(var pr=0;pr<2;pr++)for(var pc=0;pc<4;pc++)circ(6878+pc*30,632+pr*14,4,'#4B6168');
+  rr(6842,596,170,28,14,'#2A373C');circ(6980,636,5,'#FF5A5A');
+  path('M6850 612 C6820 640 6860 660 6830 650','none',' stroke="#222D31" stroke-width="5" stroke-linecap="round"');
+  // exit doors
+  shade(7234,236,552,628,.5,'b24');
+  rect(7240,232,540,620,'#2D474D');
+  rect(7256,248,252,604,u('door'));rect(7512,248,252,604,u('door'));rect(7506,248,12,604,'#2D474D');
+  [[7332],[7604]].forEach(function(a){rr(a[0],332,90,210,8,'#0D2227');rr(a[0]+4,336,82,202,6,'#2A5B66',' opacity=".55"');for(var g=1;g<5;g++){line(a[0]+4,336+g*40,a[0]+86,336+g*40,'#9FC8D0',1,' opacity=".5"');line(a[0]+g*17,336,a[0]+g*17,538,'#9FC8D0',1,' opacity=".5"')}});
+  rr(7272,602,200,16,8,u('steel'));rr(7552,602,200,16,8,u('steel'));
+  rect(7256,780,252,72,'#6B8782');rect(7512,780,252,72,'#6B8782');
+  circ(7510,100,0,'#000');
+  circ(7510,160,150,u('glow'),' opacity=".55"');
+  rr(7390,150,240,68,8,'#08241A');rr(7398,158,224,52,5,'#0F3D2A');text(7510,198,'EXIT',44,'#4CFF9A',' letter-spacing="6"');
+  // exit keypad
+  shade(7154,446,86,206,.5,'b8');
+  rr(7158,444,78,206,10,'#0E181B');rr(7166,456,62,30,5,'#06241B');rect(7174,466,46,8,'#34D399',' opacity=".75"');circ(7174,500,5,'#FF5A5A');
+  for(var r2=0;r2<4;r2++)for(var c3=0;c3<3;c3++)circ(7180+c3*18,526+r2*28,7,'#3C5258');
+  // extinguisher near the final corner
+  shade(7846,566,64,300,.4,'b8');
+  rr(7842,560,60,290,20,'#C03030');rr(7856,530,32,36,6,'#2A2E30');rect(7850,610,44,70,'#F4F7F7',' opacity=".9"');
+  floorShadow(7510,330,.5);
+
+  // corner seams, wall edge falloff, mood
+  for(var w3=0;w3<4;w3++){
+    rect(w3*2000,120,170,740,u('edgeL'));rect(w3*2000+1830,120,170,740,u('edgeR'));
+  }
+  [0,2000,4000,6000,8000].forEach(function(cx){
+    rect(cx-26,0,52,1080,u('seam'));rect(cx-1,0,2,1080,'#fff',' opacity=".10"');
+  });
+  rect(0,0,8000,1080,u('mood'));
+  o.push('</svg>');
+  return head+o.join('');
+}
 
 /* ---------- sound: all synthesised in the browser, no files ---------- */
 var AC=null,master=null,sndOn=true,vol=.6,hum=null;
@@ -374,6 +628,8 @@ function tone(f,d,type,g,delay,f2){
 }
 var sfx={
   key:function(){tone(700,.05,'square',.04)},
+  open:function(){tone(320,.18,'triangle',.12,0,720);tone(1200,.08,'sine',.06,.14)},
+  close:function(){tone(720,.14,'triangle',.08,0,360)},
   step:function(n){tone(440*Math.pow(1.122,n||0),.14,'triangle',.12)},
   pair:function(){tone(660,.08,'triangle',.12);tone(880,.1,'triangle',.12,.08)},
   ok:function(){tone(120,.3,'sawtooth',.18,0,50);[523,659,784,1047].forEach(function(f,i){tone(f,.4,'sine',.13,.12+i*.09)})},
@@ -423,19 +679,20 @@ function fxLayerHTML(){
     m+='<span class="mote" style="left:'+Math.round(Math.random()*8000)+'px;top:'+Math.round(Math.random()*1000)+'px;width:'+sz+'px;height:'+sz+'px;opacity:'+(.15+Math.random()*.4).toFixed(2)+';animation-duration:'+(18+Math.round(Math.random()*26))+'s"></span>';
   }
   return '<div class="lowvig"></div>'+m+'<div class="vig"></div>'
-    +'<div class="guides"><b class="e" style="left:0"></b><b style="left:1860px"></b><b style="left:3860px"></b><b style="left:5860px"></b><b class="e" style="left:7860px"></b>'
+    +'<div class="guides"><b class="e" style="left:0"></b><b style="left:1850px"></b><b style="left:3850px"></b><b style="left:5850px"></b><b class="e" style="left:7850px"></b>'
     +'<i style="left:2000px"></i><i style="left:4000px"></i><i style="left:6000px"></i></div>';
 }
 
 /* ---------- play engine ---------- */
 var eg=null,tid=null,beepAcc=0,prevSec=-1;
 function stopTimer(){clearInterval(tid);tid=null}
+function running(){return eg&&(eg.phase==='room'||eg.phase==='puzzle')}
 function newGame(){
   stopTimer();humOff();
   var P=puzzles();
   eg={phase:'intro',P:P,pi:0,solved:P.map(function(){return false}),hints:P.map(function(){return false}),
       total:Math.max(1,(+R.minutes||20))*60,left:Math.max(1,(+R.minutes||20))*60,wrong:0,hintsUsed:0,
-      flash:'',flashUntil:0,shake:false,ps:null,newest:-1};
+      flash:'',flashUntil:0,shake:false,ps:null};
 }
 function startPuzzle(){
   var p=eg.P[eg.pi],ps={};
@@ -457,7 +714,7 @@ function startTimer(){
   stopTimer();var last=performance.now();beepAcc=0;prevSec=-1;
   tid=setInterval(function(){
     var now=performance.now(),dt=(now-last)/1000;last=now;
-    if(!eg||eg.phase!=='play')return;
+    if(!running())return;
     eg.left=Math.max(0,eg.left-dt);
     var iv=eg.left<=15?.45:(eg.left<=60?.7:(eg.left<=300?1:1.3));
     beepAcc+=dt;if(beepAcc>=iv){beepAcc=0;sfx.beep()}
@@ -471,9 +728,9 @@ function startTimer(){
 function updateClock(){
   var low=eg.left<=60;
   document.querySelectorAll('.tval').forEach(function(e){e.textContent=fmt(eg.left)});
-  document.querySelectorAll('.tp,.e-timer,.fuse').forEach(function(e){e.classList.toggle('low',low)});
+  document.querySelectorAll('.tp,.fuse').forEach(function(e){e.classList.toggle('low',low)});
   document.querySelectorAll('.ff').forEach(function(e){e.style.width=(eg.left/eg.total*100)+'%'});
-  var st=$('#stage');if(st)st.classList.toggle('low',low&&eg.phase==='play');
+  var st=$('#stage');if(st)st.classList.toggle('low',low&&running());
 }
 function setFlash(txt){eg.flash=txt;eg.flashUntil=Date.now()+1800}
 function endLose(){
@@ -489,7 +746,7 @@ function penalise(sec){
   renderMain();sweep('bad');pulse('bad');
 }
 function solve(){
-  eg.solved[eg.pi]=true;eg.newest=eg.pi;eg.phase='solved';eg.ps=null;
+  eg.solved[eg.pi]=true;eg.phase='solved';eg.ps=null;
   sfx.ok();renderMain();sweep('ok');pulse('ok');
 }
 function next(){
@@ -497,38 +754,39 @@ function next(){
   if(eg.pi+1>=eg.P.length){
     eg.phase='win';stopTimer();humOff();sfx.win();renderMain();sweep('ok');pulse('ok');confetti();return;
   }
-  eg.pi++;eg.newest=-1;startPuzzle();eg.phase='play';renderMain();
+  eg.pi++;startPuzzle();eg.phase='room';renderMain();
 }
 function begin(){
   if(!eg.P.length)return;
   sfx.start();humOn();
-  eg.pi=0;startPuzzle();eg.phase='play';startTimer();renderMain();sweep('hint');
+  eg.pi=0;startPuzzle();eg.phase='room';startTimer();renderMain();sweep('hint');
+}
+function openHS(){
+  if(eg.phase!=='room')return;
+  eg.phase='puzzle';sfx.open();renderMain();sweep('hint');
+}
+function closeHS(){
+  if(eg.phase!=='puzzle')return;
+  eg.phase='room';sfx.close();renderMain();
 }
 
 /* ---------- walls ---------- */
 var tpHTML=function(){return '<span class="tp'+(eg.left<=60?' low':'')+'"><span class="pen">'+esc(Date.now()<eg.flashUntil?eg.flash:'')+'</span><span class="tval">'+fmt(eg.left)+'</span></span>'};
 function wall(i,label,inner,extra){
-  return '<section class="wall w'+i+(extra?' '+extra:'')+'" style="left:'+(i*2000)+'px"><div class="wh"><span class="lab">'+label+'</span>'+(i===0?'':tpHTML())+'</div>'+inner+'</section>';
+  return '<section class="wall w'+i+(extra?' '+extra:'')+'" style="left:'+(i*2000)+'px"><div class="wh"><span class="lab">'+label+'</span>'+tpHTML()+'</div>'+inner+'</section>';
 }
-function wall0HTML(){
-  var tight=eg.P.length>6;
-  var doors='<ol class="dl'+(tight?' tight':'')+'">'+eg.P.map(function(p,i){
-    var st=eg.solved[i]?'solved':((eg.phase==='play'||eg.phase==='solved')&&i===eg.pi?'now':'');
-    var ds=eg.solved[i]?'OPEN':(st==='now'?'NOW':'LOCKED');
-    return '<li class="dr '+st+'"><span class="dn">'+(i+1)+'</span><span class="dt">'+esc(p.title||'Room '+(i+1))+'</span><span class="ds">'+ds+'</span></li>';
-  }).join('')+'</ol>';
-  return '<section class="wall w0'+(tight?' tight':'')+'" style="left:0"><p class="e-eyebrow">Escape room</p><h2 class="e-title">'+esc(R.title)+'</h2>'
-    +'<div class="e-timer'+(eg.left<=60?' low':'')+'"><span class="pen">'+esc(Date.now()<eg.flashUntil?eg.flash:'')+'</span><span class="tl">TIME LEFT</span><span class="tval">'+fmt(eg.left)+'</span></div>'+doors+'</section>';
+function hud(i){
+  var label=i===0?esc(R.title):'Door '+(Math.min(eg.pi+1,eg.P.length))+' of '+eg.P.length;
+  return '<div class="hud" style="left:'+(i*2000)+'px"><span class="lab">'+label+'</span>'+tpHTML()+'</div>';
 }
-function logHTML(){
-  var idx=[];eg.P.forEach(function(p,i){if(eg.solved[i])idx.push(i)});
-  if(!idx.length)return '<p class="log none">Nothing yet.</p>';
-  var more=idx.length>5?idx.length-5:0;
-  idx=idx.slice(-5);
-  return '<ul class="log">'+(more?'<li class="more">+ '+more+' EARLIER</li>':'')+idx.map(function(i){
-    var p=eg.P[i];
-    return '<li'+(i===eg.newest?' class="new"':'')+'><p class="lt">'+esc(p.title||'Room '+(i+1))+'</p><p class="lf">'+esc(p.found)+'</p></li>';
-  }).join('')+'</ul>';
+function hotspotsHTML(){
+  return eg.P.map(function(p,i){
+    var pos=hpos(p),cur=i===eg.pi,done=eg.solved[i];
+    var st='left:'+pos.x+'px;top:'+pos.y+'px';
+    if(done)return '<div class="hs done" style="'+st+'"><span class="ring"></span><span class="core"></span></div>';
+    if(!cur)return '<div class="hs locked" style="'+st+'"><span class="ring"></span><span class="core"></span></div>';
+    return '<button class="hs cur" data-act="open" style="'+st+'" aria-label="Look closer: '+esc(p.title)+'"><span class="ring"></span><span class="core"></span><span class="cap">'+esc(p.title||'Look closer')+'</span></button>';
+  }).join('');
 }
 function puzzleBody(p){
   var ps=eg.ps,h='<p class="e-prompt">'+esc(p.prompt)+'</p>';
@@ -561,40 +819,59 @@ function puzzleBody(p){
 function stageHTML(){
   var g=eg;
   if(!g.P.length)return '<div class="emptyst"><p>This escape room has no complete puzzles yet.</p><p style="font-size:44px;color:var(--st-mut)">Choose Edit and fix or add a puzzle.</p></div>';
-  var p=g.P[g.pi],html=wall0HTML(),w1,w2,w3;
-  var done=g.solved.filter(Boolean).length;
+  var p=g.P[g.pi],cards={},done=g.solved.filter(Boolean).length;
   if(g.phase==='intro'){
-    w1=wall(1,'Your mission','<p class="e-text big2">'+esc(R.story)+'</p><div class="s-row"><button class="sbtn" data-act="begin">Start the clock</button></div>');
-    w2=wall(2,'The rules','<ul class="points rules"><li>'+g.P.length+' locked rooms, '+Math.round(g.total/60)+' minutes.</li><li>Every wrong answer costs '+(+R.wrongPenalty||0)+' seconds.</li><li>A hint costs '+(+R.hintPenalty||0)+' seconds.</li><li>The clock stops while you read what you found.</li></ul>');
+    cards[0]=wall(0,'Your mission','<p class="e-text big2">'+esc(R.story)+'</p><div class="s-row"><button class="sbtn" data-act="begin">Start the clock</button></div>');
+    cards[1]=wall(1,'The rules','<ul class="points rules"><li>'+g.P.length+' locked doors, '+Math.round(g.total/60)+' minutes.</li><li>Find the glowing object on the walls to reach each lock.</li><li>Every wrong answer costs '+(+R.wrongPenalty||0)+' seconds.</li><li>A hint costs '+(+R.hintPenalty||0)+' seconds.</li><li>The clock stops while you read what you found.</li></ul>');
   }else if(g.phase==='win'||g.phase==='lose'){
-    w1=wall(1,'Result','<p class="big '+(g.phase==='win'?'win':'lose')+'">'+(g.phase==='win'?'You escaped!':'Time is up')+'</p>'
+    cards[0]=wall(0,'Result','<p class="big '+(g.phase==='win'?'win':'lose')+'">'+(g.phase==='win'?'You escaped!':'Time is up')+'</p>'
       +'<p class="e-text">'+esc(g.phase==='win'?R.winText:R.loseText)+'</p>'
-      +'<div class="stats"><span>Rooms <b>'+done+' of '+g.P.length+'</b></span>'+(g.phase==='win'?'<span>Time left <b>'+fmt(g.left)+'</b></span>':'')+'<span>Wrong answers <b>'+g.wrong+'</b></span><span>Hints <b>'+g.hintsUsed+'</b></span></div>'
+      +'<div class="stats"><span>Doors <b>'+done+' of '+g.P.length+'</b></span>'+(g.phase==='win'?'<span>Time left <b>'+fmt(g.left)+'</b></span>':'')+'<span>Wrong answers <b>'+g.wrong+'</b></span><span>Hints <b>'+g.hintsUsed+'</b></span></div>'
       +'<div class="s-row"><button class="sbtn" data-act="again">Play again</button></div>');
-    w2=wall(2,'What to remember','<ul class="points'+(g.P.length>5?' dense':'')+'">'+g.P.map(function(q){return '<li><b>'+esc(q.title)+'</b><span class="pt">'+esc(q.teach)+'</span></li>'}).join('')+'</ul>');
-  }else{
+    cards[1]=wall(1,'What to remember','<ul class="points'+(g.P.length>5?' dense':'')+'">'+g.P.map(function(q){return '<li><b>'+esc(q.title)+'</b><span class="pt">'+esc(q.teach)+'</span></li>'}).join('')+'</ul>');
+  }else if(g.phase==='puzzle'||g.phase==='solved'){
+    var k=wallOf(hpos(p).x),k2=(k+1)%4;
     var len=p.scene.length,cls=len>330?' s':(len>230?' m':'');
-    var hint='';
-    if(g.phase==='play'&&p.hint){
-      hint=g.hints[g.pi]?'<div class="hintbox"><b>HINT</b>'+esc(p.hint)+'</div>'
-        :'<div><button class="sbtn alt" data-act="hint">Use a hint (−'+(+R.hintPenalty||0)+' s)</button></div>';
+    var extra='';
+    if(g.phase==='puzzle'){
+      extra=p.hint?(g.hints[g.pi]?'<div class="hintbox"><b>HINT</b>'+esc(p.hint)+'</div>':'<div><button class="sbtn alt" data-act="hint">Use a hint (−'+(+R.hintPenalty||0)+' s)</button></div>'):'';
+      extra+='<div><button class="sbtn alt" data-act="close">Back to the room</button></div>';
     }
-    w1=wall(1,'The room','<p class="e-text'+cls+'">'+esc(p.scene)+'</p>'+hint);
+    cards[k]=wall(k,esc(p.title||'Look closer'),'<p class="e-text'+cls+'">'+esc(p.scene)+'</p>'+extra);
     if(g.phase==='solved'){
-      w2=wall(2,'Unlocked','<div class="okbox"><p class="ok-h">Door open</p><p class="ok-f">'+esc(p.found)+'</p>'
+      cards[k2]=wall(k2,'Unlocked','<div class="okbox"><p class="ok-h">Door open</p><p class="ok-f">'+esc(p.found)+'</p>'
         +(p.teach?'<div class="teach"><b>WHY IT MATTERS</b>'+esc(p.teach)+'</div>':'')
-        +'<div class="s-row"><button class="sbtn" data-act="next">'+(g.pi+1>=g.P.length?'Escape!':'Open the next door')+'</button></div></div>');
+        +'<div class="s-row"><button class="sbtn" data-act="next">'+(g.pi+1>=g.P.length?'Escape!':'Continue')+'</button></div></div>');
     }else{
-      w2=wall(2,'The lock · '+esc(TYPES[p.type]),puzzleBody(p),g.shake?'shake':'');
+      cards[k2]=wall(k2,'The lock · '+esc(TYPES[p.type]),puzzleBody(p),g.shake?'shake':'');
     }
   }
-  w3=wall(3,'Found so far',logHTML());
-  var fuse='<div class="fuse'+(g.left<=60?' low':'')+'"><div class="ff" style="width:'+(g.left/g.total*100)+'%"></div></div>';
-  return html+w1+w2+w3+fuse;
+  var html='';
+  for(var i=0;i<4;i++)html+=cards[i]||hud(i);
+  if(g.phase==='room')html+=hotspotsHTML();
+  html+='<div class="fuse'+(g.left<=60?' low':'')+'"><div class="ff" style="width:'+(g.left/g.total*100)+'%"></div></div>';
+  return html;
 }
 
 /* ---------- edit ---------- */
+function pickerHTML(){
+  var zones='';
+  [0,2000,4000,6000,8000].forEach(function(c){
+    var a=Math.max(0,c-370),b=Math.min(8000,c+370);
+    zones+='<div class="zone" style="left:'+(a/80)+'%;width:'+((b-a)/80)+'%"></div>';
+    if(c>0&&c<8000)zones+='<div class="cl" style="left:'+(c/80)+'%"></div>';
+  });
+  var pins=R.puzzles.map(function(p,i){
+    var d=hpos(p);
+    return '<span class="pin'+(i===pickIdx?' sel':'')+'" data-i="'+i+'" style="left:'+(d.x/80)+'%;top:'+(d.y/10.8)+'%">'+(i+1)+'</span>';
+  }).join('');
+  return '<div class="pickwrap"><h3>Hotspots</h3><p class="hint">Choose a puzzle, then click the picture to place its glowing hotspot on an object. Red zones are near the room corners, so hotspots snap away from them.</p>'
+    +'<label class="field"><span>Placing the hotspot for</span><select id="picksel">'
+    +R.puzzles.map(function(p,i){return '<option value="'+i+'" '+(i===pickIdx?'selected':'')+'>'+(i+1)+'. '+esc(p.title||'Untitled')+'</option>'}).join('')+'</select></label>'
+    +'<div class="pick" id="pick">'+roomSVG('pk',R.bgImage)+zones+pins+'</div></div>';
+}
 function roomEdit(){
+  if(pickIdx>=R.puzzles.length)pickIdx=Math.max(0,R.puzzles.length-1);
   var html='<section class="panel"><h2>Edit: '+esc(R.title||'Untitled escape room')+'</h2><div class="edit">'
     +'<label class="field"><span>Escape room title</span><input type="text" id="e-title" data-f="title" value="'+esc(R.title)+'"></label>'
     +'<label class="field"><span>Story at the start</span><textarea id="e-story" rows="3" data-f="story">'+esc(R.story)+'</textarea></label>'
@@ -603,6 +880,8 @@ function roomEdit(){
     +'<label class="field"><span>Seconds lost for a hint</span><input type="number" id="e-hp" min="0" max="300" data-f="hintPenalty" value="'+esc(R.hintPenalty)+'"></label></div>'
     +'<div class="grid2"><label class="field"><span>Message when the team escapes</span><textarea id="e-win" rows="2" data-f="winText">'+esc(R.winText)+'</textarea></label>'
     +'<label class="field"><span>Message when time runs out</span><textarea id="e-lose" rows="2" data-f="loseText">'+esc(R.loseText)+'</textarea></label></div>'
+    +'<label class="field"><span>Your own room picture (optional): the web address of an 8000 × 1080 image. Leave blank for the illustrated ward.</span><input type="text" id="e-bg" data-f="bgImage" data-r="1" placeholder="https://" value="'+esc(R.bgImage)+'"></label>'
+    +pickerHTML()
     +'<h3>Puzzles</h3>';
   R.puzzles.forEach(function(p,i){
     var pr=problem(p);
@@ -610,8 +889,8 @@ function roomEdit(){
       +'<div class="actions"><button class="btn ghost" data-act="mvup" data-i="'+i+'" '+(i===0?'disabled':'')+'>Move up</button><button class="btn ghost" data-act="mvdown" data-i="'+i+'" '+(i===R.puzzles.length-1?'disabled':'')+'>Move down</button><button class="btn ghost" data-act="delp" data-i="'+i+'">Remove</button></div></div>'
       +'<div class="grid2"><label class="field"><span>Puzzle type</span><select id="e-ty'+i+'" data-f="ptype" data-i="'+i+'" data-r="1">'
       +Object.keys(TYPES).map(function(k){return '<option value="'+k+'" '+(p.type===k?'selected':'')+'>'+TYPES[k]+'</option>'}).join('')+'</select></label>'
-      +'<label class="field"><span>Room name</span><input type="text" id="e-pt'+i+'" data-f="ptitle" data-i="'+i+'" data-r="1" value="'+esc(p.title)+'"></label></div>'
-      +'<label class="field"><span>What the team sees in this room (about 300 characters or fewer fits best)</span><textarea id="e-sc'+i+'" rows="3" data-f="pscene" data-i="'+i+'">'+esc(p.scene)+'</textarea></label>'
+      +'<label class="field"><span>Name of the glowing object</span><input type="text" id="e-pt'+i+'" data-f="ptitle" data-i="'+i+'" data-r="1" value="'+esc(p.title)+'"></label></div>'
+      +'<label class="field"><span>What the team sees when they look closer (about 300 characters or fewer fits best)</span><textarea id="e-sc'+i+'" rows="3" data-f="pscene" data-i="'+i+'">'+esc(p.scene)+'</textarea></label>'
       +'<label class="field"><span>The question or task</span><input type="text" id="e-pr'+i+'" data-f="pprompt" data-i="'+i+'" value="'+esc(p.prompt)+'"></label>';
     if(p.type==='code'){
       html+='<label class="field"><span>Answer (a number, such as 15 or 7.5)</span><input type="text" id="e-an'+i+'" data-f="panswer" data-i="'+i+'" value="'+esc(p.answer)+'"></label>';
@@ -631,7 +910,7 @@ function roomEdit(){
   });
   html+='<div class="actions"><button class="btn secondary" data-act="addp">Add a puzzle</button></div>'
     +'<details class="paste"><summary>Paste a whole escape room from text or AI</summary><div class="inner">'
-    +'<p class="hint">Best done on a laptop. Ask any AI tool with this prompt, paste its answer below, then use Share link in the bar above to carry the finished room to the Igloo.</p>'
+    +'<p class="hint">Best done on a laptop. Ask any AI tool with this prompt, paste its answer below, place the hotspots, then use Share link in the bar above to carry the finished room to the Igloo.</p>'
     +'<pre class="prompt" id="rprompt">'+esc(ROOM_PROMPT)+'</pre>'
     +'<div class="actions"><button class="btn secondary" data-act="copy" data-src="rprompt">Copy prompt</button></div>'
     +'<label class="field"><span>Pasted escape room</span><textarea id="rpaste" rows="10"></textarea></label>'
@@ -689,7 +968,9 @@ async function unpack(s){
 }
 function loadRoom(o){
   R={title:String(o.title||''),story:String(o.story||''),minutes:+o.minutes||20,wrongPenalty:+o.wrongPenalty||0,hintPenalty:+o.hintPenalty||0,
+     bgImage:okImg(o.bgImage)?String(o.bgImage).trim():'',
      winText:String(o.winText||''),loseText:String(o.loseText||''),puzzles:(o.puzzles||[]).map(normPuzzle)};
+  ensurePos(R.puzzles);
 }
 
 /* ---------- shell ---------- */
@@ -705,7 +986,7 @@ function renderChrome(){
   $('#bar').innerHTML='<div class="seg" role="group" aria-label="Mode">'
     +'<button data-act="mode" data-v="play" aria-pressed="'+play+'">Play</button>'
     +'<button data-act="mode" data-v="edit" aria-pressed="'+!play+'">Edit</button></div>'
-    +'<div class="right">'+(play?'<span class="keys-hint">Keys: digits for a code lock, A to D for multiple choice.</span>'
+    +'<div class="right">'+(play?'<span class="keys-hint">Keys: Enter opens the glowing object, Esc goes back, digits for a code lock, A to D for multiple choice.</span>'
       +'<button class="btn secondary" data-act="snd" aria-pressed="'+sndOn+'">Sound: '+(sndOn?'on':'off')+'</button>'
       +'<label class="vol">Volume <input type="range" id="vol" min="0" max="100" value="'+Math.round(vol*100)+'" aria-label="Volume"></label>'
       +'<button class="btn secondary" data-act="guides" aria-pressed="'+guides+'">Corner guides: '+(guides?'on':'off')+'</button>'
@@ -717,17 +998,19 @@ function renderMain(){
   var host=$('#host');
   if(mode!=='play'){stopTimer();humOff();host.dataset.kind='edit';host.innerHTML=roomEdit();return}
   if(host.dataset.kind!=='play'){
-    host.dataset.kind='play';
-    host.innerHTML='<div class="scroller'+(real?' real':'')+'" id="scroller"><div class="viewport" id="vp"><div class="stage'+(guides?' g':'')+'" id="stage"><div id="scene"></div><div id="fx">'+fxLayerHTML()+'</div></div></div></div>';
+    host.dataset.kind='play';host.dataset.art='\u0000';
+    host.innerHTML='<div class="scroller'+(real?' real':'')+'" id="scroller"><div class="viewport" id="vp"><div class="stage'+(guides?' g':'')+'" id="stage"><div id="art"></div><div id="scene"></div><div id="fx">'+fxLayerHTML()+'</div></div></div></div>';
     if(ro)ro.disconnect();
     if(window.ResizeObserver){ro=new ResizeObserver(fit);ro.observe($('#vp'))}
   }
+  var key=okImg(R.bgImage)?R.bgImage.trim():'';
+  if(host.dataset.art!==key){$('#art').innerHTML=roomSVG('rm',key);host.dataset.art=key}
   $('#scene').innerHTML=stageHTML();
   eg.shake=false;
   fit();
 }
 function ckey(k){
-  if(!eg||eg.phase!=='play'||eg.P[eg.pi].type!=='code')return;
+  if(!eg||eg.phase!=='puzzle'||eg.P[eg.pi].type!=='code')return;
   var v=eg.ps.val;
   if(k==='del')v=v.slice(0,-1);
   else if(k==='.'){if(v.indexOf('.')<0&&v.length<8)v+='.'}
@@ -740,7 +1023,7 @@ var actions={
   guides:function(){guides=!guides;var st=$('#stage');if(st)st.classList.toggle('g',guides);renderChrome()},
   snd:function(){
     sndOn=!sndOn;
-    if(!sndOn)humOff();else{sfx.key();if(eg&&eg.phase==='play')humOn()}
+    if(!sndOn)humOff();else{sfx.key();if(running())humOn()}
     renderChrome();
   },
   fs:function(){
@@ -765,8 +1048,10 @@ var actions={
   },
   begin:function(){begin()},
   again:function(){newGame();renderMain()},
+  open:function(){openHS()},
+  close:function(){closeHS()},
   hint:function(){
-    if(eg.phase!=='play'||eg.hints[eg.pi])return;
+    if(eg.phase!=='puzzle'||eg.hints[eg.pi])return;
     eg.hints[eg.pi]=true;eg.hintsUsed++;
     var pen=+R.hintPenalty||0;eg.left=Math.max(0,eg.left-pen);
     if(pen)setFlash('−'+pen+' s');
@@ -777,25 +1062,25 @@ var actions={
   next:function(){next()},
   ckey:function(b){ckey(b.dataset.k)},
   unlock:function(){
-    if(eg.phase!=='play')return;
+    if(eg.phase!=='puzzle')return;
     var p=eg.P[eg.pi],v=parseFloat(eg.ps.val);
     if(!isNaN(v)&&Math.abs(v-parseFloat(p.answer))<1e-9)solve();
     else{eg.ps.val='';penalise(+R.wrongPenalty||0)}
   },
   cpick:function(b){
-    if(eg.phase!=='play')return;
+    if(eg.phase!=='puzzle')return;
     var p=eg.P[eg.pi],i=+b.dataset.i;
     if(i===p.correct)solve();
     else{eg.ps.bad.push(i);penalise(+R.wrongPenalty||0)}
   },
   ochip:function(b){
-    if(eg.phase!=='play')return;
+    if(eg.phase!=='puzzle')return;
     var i=+b.dataset.i;
     if(i===eg.ps.next){eg.ps.next++;if(eg.ps.next>=eg.ps.n)solve();else{sfx.step(eg.ps.next);renderMain()}}
     else penalise(+R.wrongPenalty||0);
   },
   mpick:function(b){
-    if(eg.phase!=='play')return;
+    if(eg.phase!=='puzzle')return;
     var ps=eg.ps,s=b.dataset.s,i=+b.dataset.i;
     if(!ps.sel||ps.sel.s===s){sfx.key();ps.sel={s:s,i:i};renderMain();return}
     if(ps.sel.i===i){
@@ -803,7 +1088,7 @@ var actions={
       if(Object.keys(ps.done).length>=ps.n)solve();else{sfx.pair();renderMain()}
     }else{ps.sel=null;penalise(+R.wrongPenalty||0)}
   },
-  addp:function(){R.puzzles.push(blankPuzzle('code'));renderMain()},
+  addp:function(){var p=blankPuzzle('code');R.puzzles.push(p);ensurePos(R.puzzles);pickIdx=R.puzzles.length-1;renderMain()},
   delp:function(b){R.puzzles.splice(+b.dataset.i,1);renderMain()},
   mvup:function(b){var i=+b.dataset.i;if(i>0){var t=R.puzzles[i];R.puzzles[i]=R.puzzles[i-1];R.puzzles[i-1]=t;renderMain()}},
   mvdown:function(b){var i=+b.dataset.i;if(i<R.puzzles.length-1){var t=R.puzzles[i];R.puzzles[i]=R.puzzles[i+1];R.puzzles[i+1]=t;renderMain()}},
@@ -811,10 +1096,10 @@ var actions={
     var r=parseRoom(document.getElementById('rpaste').value),msg=document.getElementById('rpmsg');
     if(!r.puzzles.length){msg.textContent='No puzzles found. Start each puzzle with PUZZLE: and a type.';return}
     if(r.title)R.title=r.title;if(r.story)R.story=r.story;if(r.minutes)R.minutes=r.minutes;
-    R.puzzles=r.puzzles;renderMain();
+    R.puzzles=r.puzzles;ensurePos(R.puzzles);pickIdx=0;renderMain();
     var d=document.querySelector('details.paste');if(d)d.open=true;
     var bad=R.puzzles.filter(problem).length,m2=document.getElementById('rpmsg');
-    if(m2)m2.textContent=r.puzzles.length+' puzzles added above.'+(bad?' '+bad+' need fixing and will be skipped until you do.':'');
+    if(m2)m2.textContent=r.puzzles.length+' puzzles added above. Check the hotspot positions in the picture.'+(bad?' '+bad+' need fixing and will be skipped until you do.':'');
   },
   copy:function(b){
     var pre=document.getElementById(b.dataset.src),old=b.textContent;
@@ -822,7 +1107,16 @@ var actions={
     try{navigator.clipboard.writeText(pre.textContent).then(function(){b.textContent='Copied';setTimeout(function(){b.textContent=old},1500)},fallback)}catch(e){fallback()}
   }
 };
+function placePin(e,pk){
+  var r=pk.getBoundingClientRect(),p=R.puzzles[pickIdx];if(!p||!r.width)return;
+  var x=(e.clientX-r.left)/r.width*8000,y=(e.clientY-r.top)/r.height*1080;
+  p.hx=Math.round(clampX(x));p.hy=Math.round(clamp(y,220,820));
+  var pin=pk.querySelector('.pin[data-i="'+pickIdx+'"]');
+  if(pin){pin.style.left=(p.hx/80)+'%';pin.style.top=(p.hy/10.8)+'%'}
+}
 document.addEventListener('click',function(e){
+  var pk=e.target.closest('#pick');
+  if(pk){placePin(e,pk);return}
   var b=e.target.closest('[data-act]');
   if(!b||b.disabled)return;
   var fn=actions[b.dataset.act];if(fn)fn(b);
@@ -837,6 +1131,7 @@ function setField(t){
     case 'hintPenalty':R.hintPenalty=t.value;return;
     case 'winText':R.winText=t.value;return;
     case 'loseText':R.loseText=t.value;return;
+    case 'bgImage':R.bgImage=t.value;return;
   }
   if(!p)return;
   switch(f){
@@ -859,15 +1154,25 @@ document.addEventListener('input',function(e){
   if(t.id==='vol'){vol=(+t.value)/100;if(master)master.gain.value=vol;return}
   if(t.dataset&&t.dataset.f)setField(t);
 });
-document.addEventListener('change',function(e){var t=e.target;if(t.dataset&&t.dataset.f&&t.dataset.r){setField(t);renderMain()}});
+document.addEventListener('change',function(e){
+  var t=e.target;
+  if(t.id==='picksel'){
+    pickIdx=+t.value;
+    document.querySelectorAll('.pin').forEach(function(pn){pn.classList.toggle('sel',+pn.dataset.i===pickIdx)});
+    return;
+  }
+  if(t.dataset&&t.dataset.f&&t.dataset.r){setField(t);renderMain()}
+});
 document.addEventListener('keydown',function(e){
   if(mode!=='play'||!eg||e.ctrlKey||e.metaKey||e.altKey)return;
   var a=document.activeElement;
   if(a&&/^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))return;
   var k=e.key;
   if(eg.phase==='intro'&&k==='Enter'){e.preventDefault();begin();return}
+  if(eg.phase==='room'&&(k==='Enter'||k===' ')){e.preventDefault();openHS();return}
+  if(eg.phase==='puzzle'&&k==='Escape'){e.preventDefault();closeHS();return}
   if(eg.phase==='solved'&&(k==='Enter'||k===' ')){e.preventDefault();next();return}
-  if(eg.phase!=='play')return;
+  if(eg.phase!=='puzzle')return;
   var p=eg.P[eg.pi];
   if(p.type==='code'){
     if(/^[0-9.]$/.test(k)){e.preventDefault();ckey(k)}
@@ -886,6 +1191,7 @@ document.addEventListener('fullscreenchange',fit);
 document.addEventListener('webkitfullscreenchange',fit);
 
 async function boot(){
+  ensurePos(R.puzzles);
   var h=location.hash,loaded=false;
   if(h.indexOf('#r=')===0){
     try{var o=await unpack(h.slice(3));if(o&&Array.isArray(o.puzzles)){loadRoom(o);loaded=true}}catch(e){}
