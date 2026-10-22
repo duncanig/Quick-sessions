@@ -265,7 +265,7 @@ pre.prompt{margin:0;white-space:pre-wrap;word-break:break-word;font-family:var(-
   <div id="share"></div>
   <div id="banner"></div>
   <main id="host"></main>
-  <p class="foot">Concept prototype for customer research. The ward is an illustration drawn in the browser, not a photograph. To use real photos or renders instead, paste the web address of an 8000 × 1080 picture into Edit, then place the hotspots on it. Laid out for a cube-shaped room with a corner every 2,000 px: all text stays 150 px clear of each corner, and only the picture and light effects cross them. Turn on Corner guides to check. Sound needs a click first, because browsers block audio until then. The sample clinical content is fictional and written for teaching illustration, so a lecturer should check every clinical detail before using it with students. Edits last until the page is closed unless you share a link, and share links work on the hosted copy of this page. This has not been tested on a real display yet.</p>
+  <p class="foot">Concept prototype for customer research. The ward is an illustration drawn in the browser, not a photograph. To use real photos or renders instead, paste the web address of an 8000 × 1080 picture into Edit, then place the hotspots on it. Laid out for a cube-shaped room with a corner every 2,000 px: all text stays 150 px clear of each corner, and only the picture and light effects cross them. Turn on Corner guides to check. Sound needs a click first, because browsers block audio until then. The voice uses the browser's built-in voice, so how it sounds depends on the device; the music is generated in the browser. The sample clinical content is fictional and written for teaching illustration, so a lecturer should check every clinical detail before using it with students. Edits last until the page is closed unless you share a link, and share links work on the hosted copy of this page. This has not been tested on a real display yet.</p>
 </div>
 
 <script>
@@ -608,7 +608,7 @@ function roomSVG(pre,bg){
 }
 
 /* ---------- sound: all synthesised in the browser, no files ---------- */
-var AC=null,master=null,sndOn=true,vol=.6,hum=null;
+var AC=null,master=null,sndOn=true,vol=.6,hum=null,musicOn=true,voiceOn=true,vcache=null;
 function ac(){
   if(!sndOn)return null;
   try{
@@ -642,10 +642,68 @@ var sfx={
   lose:function(){[392,330,262,196].forEach(function(f,i){tone(f,.5,'sawtooth',.1,i*.28)})}
 };
 function humOn(){
-  var c=ac();if(!c||hum)return;
-  try{var o=c.createOscillator(),g=c.createGain();o.type='sine';o.frequency.value=55;g.gain.value=.03;o.connect(g);g.connect(master);o.start();hum={o:o}}catch(e){}
+  var c=ac();if(!c||hum||!musicOn)return;
+  try{
+    var g=c.createGain();g.gain.setValueAtTime(0.0001,c.currentTime);g.gain.linearRampToValueAtTime(.05,c.currentTime+4);g.connect(master);
+    var lp=c.createBiquadFilter();lp.type='lowpass';lp.frequency.value=420;lp.Q.value=2;lp.connect(g);
+    var oscs=[55,55.35,82.4,110.2].map(function(f){var o=c.createOscillator();o.type='sawtooth';o.frequency.value=f;var gg=c.createGain();gg.gain.value=.22;o.connect(gg);gg.connect(lp);o.start();return o});
+    var lfo=c.createOscillator();lfo.frequency.value=.07;var lg=c.createGain();lg.gain.value=170;lfo.connect(lg);lg.connect(lp.frequency);lfo.start();
+    var step=0,notes=[220,233.1,207.7,196,233.1,261.6];
+    var id=setInterval(function(){
+      if(!sndOn||!musicOn||!AC)return;
+      var n=step++%16;
+      tone(55,.42,'sine',.09,0,38);
+      if(n%4===2)tone(65.4,.4,'sine',.06,.3,44);
+      if(n%8===0)tone(notes[Math.floor(step/8)%notes.length],2.4,'sine',.014);
+    },620);
+    hum={g:g,oscs:oscs.concat([lfo]),id:id,c:c};
+  }catch(e){}
 }
-function humOff(){if(hum){try{hum.o.stop()}catch(e){}hum=null}}
+function humOff(){
+  if(!hum)return;var h=hum;hum=null;
+  clearInterval(h.id);
+  try{h.g.gain.cancelScheduledValues(h.c.currentTime);h.g.gain.setValueAtTime(h.g.gain.value,h.c.currentTime);h.g.gain.linearRampToValueAtTime(0.0001,h.c.currentTime+.8)}catch(e){}
+  setTimeout(function(){h.oscs.forEach(function(o){try{o.stop()}catch(e){}})},900);
+}
+
+/* ---------- voiceover: the browser's own speech voice, no files ---------- */
+function pickVoice(){
+  if(!window.speechSynthesis)return null;
+  if(vcache)return vcache;
+  var v=speechSynthesis.getVoices();if(!v.length)return null;
+  var en=v.filter(function(x){return /^en/i.test(x.lang)});
+  var pick=en.filter(function(x){return /en[-_]GB/i.test(x.lang)&&/female|google|natural|libby|sonia|serena|kate/i.test(x.name)})[0]
+    ||en.filter(function(x){return /en[-_]GB/i.test(x.lang)})[0]||en[0]||null;
+  vcache=pick;return pick;
+}
+if(window.speechSynthesis){try{speechSynthesis.onvoiceschanged=function(){vcache=null}}catch(e){}}
+function stopSpeak(){try{if(window.speechSynthesis)speechSynthesis.cancel()}catch(e){}}
+function speechClean(t){
+  return String(t||'').replace(/mL\/h/g,'millilitres per hour').replace(/\bmL\b/g,'millilitres').replace(/\bmg\b/g,'milligrams')
+    .replace(/ABCDE/g,'A B C D E').replace(/\bIV\b/g,'I V').replace(/\s+/g,' ').trim();
+}
+function speak(text){
+  if(!sndOn||!voiceOn||!window.speechSynthesis||!text)return;
+  stopSpeak();
+  setTimeout(function(){
+    try{
+      var parts=speechClean(text).match(/[^.!?]+[.!?]*/g)||[];
+      parts.forEach(function(sn){
+        sn=sn.trim();if(!sn)return;
+        var u=new SpeechSynthesisUtterance(sn),v=pickVoice();
+        if(v){u.voice=v;u.lang=v.lang}else u.lang='en-GB';
+        u.rate=.95;speechSynthesis.speak(u);
+      });
+    }catch(e){}
+  },80);
+}
+function puzzleSpeech(p){
+  var t=p.scene+' '+p.prompt;
+  if(p.type==='choose'){
+    var n=0;p.options.forEach(function(o){if(o.trim()){t+=' Option '+'ABCD'[n]+'. '+o.trim()+'.';n++}});
+  }
+  return t;
+}
 
 /* ---------- light effects ---------- */
 function pulse(kind){
@@ -688,7 +746,7 @@ var eg=null,tid=null,beepAcc=0,prevSec=-1;
 function stopTimer(){clearInterval(tid);tid=null}
 function running(){return eg&&(eg.phase==='room'||eg.phase==='puzzle')}
 function newGame(){
-  stopTimer();humOff();
+  stopTimer();humOff();stopSpeak();
   var P=puzzles();
   eg={phase:'intro',P:P,pi:0,solved:P.map(function(){return false}),hints:P.map(function(){return false}),
       total:Math.max(1,(+R.minutes||20))*60,left:Math.max(1,(+R.minutes||20))*60,wrong:0,hintsUsed:0,
@@ -717,7 +775,7 @@ function startTimer(){
     if(!running())return;
     eg.left=Math.max(0,eg.left-dt);
     var iv=eg.left<=15?.45:(eg.left<=60?.7:(eg.left<=300?1:1.3));
-    beepAcc+=dt;if(beepAcc>=iv){beepAcc=0;sfx.beep()}
+    
     var sec=Math.ceil(eg.left);
     if(sec!==prevSec){prevSec=sec;if(sec<=10&&sec>0)sfx.count(sec)}
     updateClock();
@@ -734,7 +792,7 @@ function updateClock(){
 }
 function setFlash(txt){eg.flash=txt;eg.flashUntil=Date.now()+1800}
 function endLose(){
-  eg.phase='lose';stopTimer();humOff();sfx.lose();
+  eg.phase='lose';stopTimer();humOff();sfx.lose();speak(R.loseText);
   var st=$('#stage');if(st)st.classList.remove('low');
   renderMain();sweep('bad');pulse('bad');
 }
@@ -747,27 +805,27 @@ function penalise(sec){
 }
 function solve(){
   eg.solved[eg.pi]=true;eg.phase='solved';eg.ps=null;
-  sfx.ok();renderMain();sweep('ok');pulse('ok');
+  sfx.ok();renderMain();sweep('ok');pulse('ok');speak(eg.P[eg.pi].found);
 }
 function next(){
-  sfx.key();
+  sfx.key();stopSpeak();
   if(eg.pi+1>=eg.P.length){
-    eg.phase='win';stopTimer();humOff();sfx.win();renderMain();sweep('ok');pulse('ok');confetti();return;
+    eg.phase='win';stopTimer();humOff();sfx.win();speak(R.winText);renderMain();sweep('ok');pulse('ok');confetti();return;
   }
   eg.pi++;startPuzzle();eg.phase='room';renderMain();
 }
 function begin(){
   if(!eg.P.length)return;
   sfx.start();humOn();
-  eg.pi=0;startPuzzle();eg.phase='room';startTimer();renderMain();sweep('hint');
+  eg.pi=0;startPuzzle();eg.phase='room';startTimer();renderMain();sweep('hint');speak('Find the glowing object.');
 }
 function openHS(){
   if(eg.phase!=='room')return;
-  eg.phase='puzzle';sfx.open();renderMain();sweep('hint');
+  eg.phase='puzzle';sfx.open();renderMain();sweep('hint');speak(puzzleSpeech(eg.P[eg.pi]));
 }
 function closeHS(){
   if(eg.phase!=='puzzle')return;
-  eg.phase='room';sfx.close();renderMain();
+  eg.phase='room';sfx.close();stopSpeak();renderMain();
 }
 
 /* ---------- walls ---------- */
@@ -835,7 +893,7 @@ function stageHTML(){
     var extra='';
     if(g.phase==='puzzle'){
       extra=p.hint?(g.hints[g.pi]?'<div class="hintbox"><b>HINT</b>'+esc(p.hint)+'</div>':'<div><button class="sbtn alt" data-act="hint">Use a hint (−'+(+R.hintPenalty||0)+' s)</button></div>'):'';
-      extra+='<div><button class="sbtn alt" data-act="close">Back to the room</button></div>';
+      extra+='<div class="s-row"><button class="sbtn alt" data-act="speak">Read aloud again</button><button class="sbtn alt" data-act="close">Back to the room</button></div>';
     }
     cards[k]=wall(k,esc(p.title||'Look closer'),'<p class="e-text'+cls+'">'+esc(p.scene)+'</p>'+extra);
     if(g.phase==='solved'){
@@ -989,6 +1047,8 @@ function renderChrome(){
     +'<div class="right">'+(play?'<span class="keys-hint">Keys: Enter opens the glowing object, Esc goes back, digits for a code lock, A to D for multiple choice.</span>'
       +'<button class="btn secondary" data-act="snd" aria-pressed="'+sndOn+'">Sound: '+(sndOn?'on':'off')+'</button>'
       +'<label class="vol">Volume <input type="range" id="vol" min="0" max="100" value="'+Math.round(vol*100)+'" aria-label="Volume"></label>'
+      +'<button class="btn secondary" data-act="voice" aria-pressed="'+voiceOn+'">Voice: '+(voiceOn?'on':'off')+'</button>'
+      +'<button class="btn secondary" data-act="music" aria-pressed="'+musicOn+'">Music: '+(musicOn?'on':'off')+'</button>'
       +'<button class="btn secondary" data-act="guides" aria-pressed="'+guides+'">Corner guides: '+(guides?'on':'off')+'</button>'
       +'<button class="btn secondary" data-act="real">'+(real?'Fit to screen':'Real size (8000 px)')+'</button>':'')
     +'<button class="btn secondary" data-act="share">Share link</button>'
@@ -1023,7 +1083,7 @@ var actions={
   guides:function(){guides=!guides;var st=$('#stage');if(st)st.classList.toggle('g',guides);renderChrome()},
   snd:function(){
     sndOn=!sndOn;
-    if(!sndOn)humOff();else{sfx.key();if(running())humOn()}
+    if(!sndOn){humOff();stopSpeak()}else{sfx.key();if(running())humOn()}
     renderChrome();
   },
   fs:function(){
@@ -1046,6 +1106,9 @@ var actions={
     function fb(){inp.focus();inp.select();if(m)m.textContent='Selected. Now copy it.'}
     try{navigator.clipboard.writeText(inp.value).then(function(){if(m)m.textContent='Copied'},fb)}catch(e){fb()}
   },
+  voice:function(){voiceOn=!voiceOn;if(!voiceOn)stopSpeak();renderChrome()},
+  music:function(){musicOn=!musicOn;if(!musicOn)humOff();else if(running())humOn();renderChrome()},
+  speak:function(){if(eg&&eg.phase==='puzzle')speak(puzzleSpeech(eg.P[eg.pi]))},
   begin:function(){begin()},
   again:function(){newGame();renderMain()},
   open:function(){openHS()},
