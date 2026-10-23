@@ -682,20 +682,33 @@ function speechClean(t){
   return String(t||'').replace(/mL\/h/g,'millilitres per hour').replace(/\bmL\b/g,'millilitres').replace(/\bmg\b/g,'milligrams')
     .replace(/ABCDE/g,'A B C D E').replace(/\bIV\b/g,'I V').replace(/\s+/g,' ').trim();
 }
+var vmsgT=null;
+function voiceMsg(t){
+  var m=document.getElementById('fsmsg');if(!m)return;
+  m.textContent=t;clearTimeout(vmsgT);vmsgT=setTimeout(function(){var m2=document.getElementById('fsmsg');if(m2&&m2.textContent===t)m2.textContent=''},7000);
+}
 function speak(text){
-  if(!sndOn||!voiceOn||!window.speechSynthesis||!text)return;
-  stopSpeak();
+  if(!sndOn||!voiceOn||!text)return;
+  if(!('speechSynthesis' in window)||typeof SpeechSynthesisUtterance==='undefined'){voiceMsg('This browser cannot read aloud. Try Chrome or Edge.');return}
+  var ss=window.speechSynthesis;
+  try{ss.cancel();ss.resume()}catch(e){}
   setTimeout(function(){
     try{
+      if(!ss.getVoices().length&&!vcache){voiceMsg('No speech voice found on this device, so the voiceover cannot play.')}
       var parts=speechClean(text).match(/[^.!?]+[.!?]*/g)||[];
-      parts.forEach(function(sn){
+      var started=false;
+      parts.forEach(function(sn,idx){
         sn=sn.trim();if(!sn)return;
         var u=new SpeechSynthesisUtterance(sn),v=pickVoice();
         if(v){u.voice=v;u.lang=v.lang}else u.lang='en-GB';
-        u.rate=.95;speechSynthesis.speak(u);
+        u.rate=.95;u.volume=1;
+        u.onstart=function(){started=true};
+        u.onerror=function(ev){if(ev&&ev.error&&ev.error!=='canceled'&&ev.error!=='interrupted')voiceMsg('Voiceover blocked: '+ev.error)};
+        ss.speak(u);
       });
-    }catch(e){}
-  },80);
+      setTimeout(function(){if(!started&&!ss.speaking&&parts.length)voiceMsg('The voiceover did not start. Check the device volume and that a speech voice is installed.')},2500);
+    }catch(e){voiceMsg('Voiceover failed in this browser.')}
+  },120);
 }
 function puzzleSpeech(p){
   var t=p.scene+' '+p.prompt;
@@ -1255,6 +1268,7 @@ document.addEventListener('webkitfullscreenchange',fit);
 
 async function boot(){
   ensurePos(R.puzzles);
+  try{if(window.speechSynthesis)speechSynthesis.getVoices()}catch(e){}
   var h=location.hash,loaded=false;
   if(h.indexOf('#r=')===0){
     try{var o=await unpack(h.slice(3));if(o&&Array.isArray(o.puzzles)){loadRoom(o);loaded=true}}catch(e){}
